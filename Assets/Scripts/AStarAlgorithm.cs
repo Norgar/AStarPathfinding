@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 public class AStarAlgorithm
 {
-    public void FindThePath(MazeGenerator mazeGenerator, out List<Node> path, out Dictionary<int, List<Node>> open, out Dictionary<int, List<Node>> closed, out string result, int heuristicFactor)
+    public void FindThePath(MazeGenerator mazeGenerator, ResultDataCollector resultDataCollector, int heuristicFactor)
     {
         var counter = 0;
         var endReached = false;
@@ -13,8 +13,8 @@ public class AStarAlgorithm
         List<Node> neighbours;
         Node node;
 
-        open = new Dictionary<int, List<Node>>();
-        closed = new Dictionary<int, List<Node>>();
+        resultDataCollector.Open = new Dictionary<int, List<Node>>();
+        resultDataCollector.Closed = new Dictionary<int, List<Node>>();
 
         var sw = new System.Diagnostics.Stopwatch();
 
@@ -24,7 +24,7 @@ public class AStarAlgorithm
         {
             node = openList.OrderBy(i => i.FCost).First();
 
-            closed.Add(counter, new List<Node>() { node });
+            resultDataCollector.Closed.Add(counter, new List<Node>() { node });
 
             closedList.Add(node);
             openList.Remove(node);
@@ -43,10 +43,10 @@ public class AStarAlgorithm
                 }
                 else if (!IsNodeInList(n, closedList))
                 {
-                    if (open.ContainsKey(counter))
-                        open[counter].Add(n);
+                    if (resultDataCollector.Open.ContainsKey(counter))
+                        resultDataCollector.Open[counter].Add(n);
                     else
-                        open.Add(counter, new List<Node> { n });
+                        resultDataCollector.Open.Add(counter, new List<Node> { n });
 
                     openList.Add(n);
                     n.SetParent(node);
@@ -63,18 +63,19 @@ public class AStarAlgorithm
             ++counter;
         }
 
-        path = new List<Node>();
+        resultDataCollector.Passes = counter;
+        resultDataCollector.Path = new List<Node>();
 
         if (endReached)
         {
-            GetPath(closedList.Last(), ref path);
+            GetPath(closedList.Last(), resultDataCollector.Path);
 
-            path.Reverse();
+            resultDataCollector.Path.Reverse();
 
-            result = "End point reached!\nTime: " + sw.ElapsedMilliseconds + "ms\nPasses: " + counter;
+            resultDataCollector.Result = "End point reached!\nTime: " + sw.ElapsedMilliseconds + "ms\nPasses: " + counter;
         }
         else
-            result = "End point couldn't be reached!";
+            resultDataCollector.Result = "End point couldn't be reached!";
 
         sw.Stop();
     }
@@ -101,14 +102,14 @@ public class AStarAlgorithm
 
     private bool IsNodeInList(Node node, in List<Node> list) => list.Count(n => n.IsSamePosition(node)) > 0;
 
-    private void GetPath(Node node, ref List<Node> path)
+    private void GetPath(Node node, List<Node> path)
     {
         if (node.Parent == null)
             return;
         else
         {
             path.Add(node);
-            GetPath(node.Parent, ref path);
+            GetPath(node.Parent, path);
         }
     }
 }

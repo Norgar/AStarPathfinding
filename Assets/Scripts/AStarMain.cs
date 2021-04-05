@@ -42,13 +42,11 @@ public class AStarMain : MonoBehaviour
     [SerializeField] [Range(0, 1)] private float _noizeSensitivity;
     [SerializeField] private float delay;
 
-    public MazeBuilder MazeBuilder;
     public MazeGenerator MazeGenerator;
     public AStarAlgorithm AStarAlgorithm;
+    public ResultDataCollector ResultDataCollector;
 
     public static EditMode EditMode;
-
-    private Texture2D _texture2D;
     private int _x, _y;
 
     Coroutine coroutine;
@@ -58,7 +56,7 @@ public class AStarMain : MonoBehaviour
         _buttonStart.onClick.AddListener(OnStartClick);
         _buttonReset.onClick.AddListener(OnResetClick);
 
-        MazeBuilder = new MazeBuilder();
+        ResultDataCollector = new ResultDataCollector();
         MazeGenerator = new MazeGenerator();
         AStarAlgorithm = new AStarAlgorithm();
 
@@ -66,7 +64,7 @@ public class AStarMain : MonoBehaviour
         _rawImage.texture = MazeGenerator.GenerateTexture();
 
         SetEditeModeHint(EditMode);
-        SetResult(string.Empty);
+        SetResultHint(string.Empty);
 
         _uiCanvas.gameObject.SetActive(true);
         _mapCanvas.gameObject.SetActive(true);
@@ -111,7 +109,7 @@ public class AStarMain : MonoBehaviour
                 MazeGenerator.SetFinish(x, y);
                 break;
             default:
-                SetResult("Nothing happens!\nYou've just clicked at x:" + x + " y:" + y);
+                SetResultHint("Nothing happens!\nYou've just clicked at x:" + x + " y:" + y);
                 break;
         }
     }
@@ -131,14 +129,13 @@ public class AStarMain : MonoBehaviour
 
     private void OnStartClick()
     {
-        string result;
-        AStarAlgorithm.FindThePath(MazeGenerator, out MazeBuilder.Path, out MazeBuilder.Open, out MazeBuilder.Closed, out result, _heuristicFactor);
-        SetResult(result);
+        AStarAlgorithm.FindThePath(MazeGenerator, ResultDataCollector, _heuristicFactor);
+        SetResultHint(ResultDataCollector.Result);
 
         if (delay > 0)
-            coroutine = StartCoroutine(ShowPath());
+            coroutine = StartCoroutine(ShowResultBySteps());
         else
-            ShowResult(MazeBuilder.Path, MazeBuilder.Open, MazeBuilder.Closed);
+            ShowResultImmediate(ResultDataCollector.Path, ResultDataCollector.Open, ResultDataCollector.Closed);
     }
 
     private void OnResetClick()
@@ -150,7 +147,7 @@ public class AStarMain : MonoBehaviour
         _rawImage.texture = MazeGenerator.GenerateTexture();
     }
 
-    private void ShowResult(List<Node> path, Dictionary<int, List<Node>> open, Dictionary<int, List<Node>> closed)
+    private void ShowResultImmediate(List<Node> path, Dictionary<int, List<Node>> open, Dictionary<int, List<Node>> closed)
     {
         foreach (var pass in open)
             foreach (var item in pass.Value)
@@ -164,34 +161,28 @@ public class AStarMain : MonoBehaviour
             MazeGenerator.MarkCell(item.X, item.Y, MarkType.Path);
     }
 
-    private IEnumerator ShowPath()
+    private IEnumerator ShowResultBySteps()
     {
-        var count = 0;
-
-        foreach (var pass in MazeBuilder.Open)
-            foreach (var item in pass.Value)
-                ++count;
-
-        for (int i = 0; i < count; i++)
+        for (int i = 0; i < ResultDataCollector.Passes; i++)
         {
-            if (MazeBuilder.Open.ContainsKey(i))
+            if (ResultDataCollector.Open.ContainsKey(i))
             {
                 yield return new WaitForSeconds(delay);
 
-                foreach (var item in MazeBuilder.Open[i])
+                foreach (var item in ResultDataCollector.Open[i])
                     MazeGenerator.MarkCell(item.X, item.Y, MarkType.Open);
             }
 
-            if (MazeBuilder.Closed.ContainsKey(i))
+            if (ResultDataCollector.Closed.ContainsKey(i))
             {
                 yield return new WaitForSeconds(delay);
 
-                foreach (var item in MazeBuilder.Closed[i])
+                foreach (var item in ResultDataCollector.Closed[i])
                     MazeGenerator.MarkCell(item.X, item.Y, MarkType.Closed);
             }
         }
 
-        foreach (var item in MazeBuilder.Path)
+        foreach (var item in ResultDataCollector.Path)
         {
             yield return new WaitForSeconds(delay);
 
@@ -199,7 +190,13 @@ public class AStarMain : MonoBehaviour
         }
     }
 
-    private void SetEditeModeHint(EditMode editMode) => _editModeHint.text = "Current edit mode: " + editMode + "\n(press RMB to change)";
+    private void SetEditeModeHint(EditMode editMode)
+    {
+        _editModeHint.text = "Current edit mode: " + editMode + "\n(press RMB to change)";
+    }
 
-    private void SetResult(string result) => _resultText.text = result;
+    private void SetResultHint(string result)
+    {
+        _resultText.text = result;
+    }
 }
