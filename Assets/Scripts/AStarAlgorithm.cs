@@ -11,7 +11,7 @@ public class AStarAlgorithm
         List<Node> openList = new List<Node>() { mazeGenerator.Start };
         List<Node> closedList = new List<Node>();
         List<Node> neighbours;
-        Node node;
+        Node currentNode;
 
         resultDataCollector.Open = new Dictionary<int, List<Node>>();
         resultDataCollector.Closed = new Dictionary<int, List<Node>>();
@@ -22,26 +22,26 @@ public class AStarAlgorithm
 
         while (true)
         {
-            node = openList.OrderBy(i => i.FCost).First();
+            currentNode = openList.OrderBy(i => i.FCost).First();
 
-            resultDataCollector.Closed.Add(counter, new List<Node>() { node });
+            resultDataCollector.Closed.Add(counter, new List<Node>() { currentNode });
 
-            closedList.Add(node);
-            openList.Remove(node);
+            closedList.Add(currentNode);
+            openList.Remove(currentNode);
 
-            neighbours = GetNeighbours(node, mazeGenerator.GetMaze);
+            neighbours = GetNeighbours(currentNode, mazeGenerator.GetMaze);
 
             foreach (var n in neighbours)
             {
-                if (IsNodeInList(n, openList))
+                if (openList.Contains(n))
                 {
-                    if (n.GCost < node.GCost)
+                    if (n.GCost < currentNode.GCost)
                     {
-                        n.SetParent(node);
-                        n.CalculateTransitions(node, mazeGenerator.Finish, heuristicFactor);
+                        n.SetParent(currentNode);
+                        n.CalculateTransitions(currentNode, mazeGenerator.Finish, heuristicFactor);
                     }
                 }
-                else if (!IsNodeInList(n, closedList))
+                else if (!closedList.Contains(n))
                 {
                     if (resultDataCollector.Open.ContainsKey(counter))
                         resultDataCollector.Open[counter].Add(n);
@@ -49,14 +49,14 @@ public class AStarAlgorithm
                         resultDataCollector.Open.Add(counter, new List<Node> { n });
 
                     openList.Add(n);
-                    n.SetParent(node);
-                    n.CalculateTransitions(node, mazeGenerator.Finish, heuristicFactor);
+                    n.SetParent(currentNode);
+                    n.CalculateTransitions(currentNode, mazeGenerator.Finish, heuristicFactor);
                 }
             }
 
-            if (IsNodeInList(mazeGenerator.Finish, openList) || openList.Count == 0)
+            if (currentNode.Equals(mazeGenerator.Finish) || openList.Count == 0)
             {
-                endReached = IsNodeInList(mazeGenerator.Finish, openList);
+                endReached = currentNode.Equals(mazeGenerator.Finish);
                 break;
             }
 
@@ -100,8 +100,6 @@ public class AStarAlgorithm
         return list;
     }
 
-    private bool IsNodeInList(Node node, in List<Node> list) => list.Count(n => n.IsSamePosition(node)) > 0;
-
     private void GetPath(Node node, List<Node> path)
     {
         if (node.Parent == null)
@@ -127,7 +125,6 @@ public class Node
     public int HCost { get; private set; }
     public int FCost => GCost + HCost;
 
-    public bool IsSamePosition(Node node) => node.X == X && node.Y == Y;
     public bool IsDiagonalTransition(Node node) => node.X != X && node.Y != Y;
 
     public Node(int x, int y)
@@ -144,5 +141,16 @@ public class Node
     {
         GCost = node.GCost + (IsDiagonalTransition(node) ? DiagonalTransitionCost : DirectTransitionCost);
         HCost = (Mathf.Abs(end.X - X) + Mathf.Abs(end.Y - Y)) * heuristicFactor;
+    }
+
+    public override bool Equals(object obj)
+    {
+        var n = (Node)obj;
+        return n.X == X && n.Y == Y;
+    }
+
+    public override int GetHashCode()
+    {
+        return base.GetHashCode();
     }
 }
