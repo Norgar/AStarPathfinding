@@ -4,13 +4,11 @@ using System.Collections.Generic;
 
 public class AStarAlgorithm
 {
-    public void FindThePath(int[,] _maze, int startX, int startY, int endX, int endY, out List<Node> path, out Dictionary<int, List<Node>> open, out Dictionary<int, List<Node>> closed, out string result, int heuristicFactor)
+    public void FindThePath(MazeGenerator mazeGenerator, out List<Node> path, out Dictionary<int, List<Node>> open, out Dictionary<int, List<Node>> closed, out string result, int heuristicFactor)
     {
         var counter = 0;
         var endReached = false;
-        var endNode = new Node(endX, endY);
-        var startNode = new Node(startX, startY);
-        List<Node> openList = new List<Node>() { startNode };
+        List<Node> openList = new List<Node>() { mazeGenerator.Start };
         List<Node> closedList = new List<Node>();
         List<Node> neighbours;
         Node node;
@@ -31,7 +29,7 @@ public class AStarAlgorithm
             closedList.Add(node);
             openList.Remove(node);
 
-            neighbours = GetNeighbours(node, _maze);
+            neighbours = GetNeighbours(node, mazeGenerator.GetMaze);
 
             foreach (var n in neighbours)
             {
@@ -40,7 +38,7 @@ public class AStarAlgorithm
                     if (n.GCost < node.GCost)
                     {
                         n.SetParent(node);
-                        n.CalculateTransitions(node, endNode, heuristicFactor);
+                        n.CalculateTransitions(node, mazeGenerator.Finish, heuristicFactor);
                     }
                 }
                 else if (!IsNodeInList(n, closedList))
@@ -52,13 +50,13 @@ public class AStarAlgorithm
 
                     openList.Add(n);
                     n.SetParent(node);
-                    n.CalculateTransitions(node, endNode, heuristicFactor);
+                    n.CalculateTransitions(node, mazeGenerator.Finish, heuristicFactor);
                 }
             }
 
-            if (IsNodeInList(endNode, openList) || openList.Count == 0)
+            if (IsNodeInList(mazeGenerator.Finish, openList) || openList.Count == 0)
             {
-                endReached = IsNodeInList(endNode, openList);
+                endReached = IsNodeInList(mazeGenerator.Finish, openList);
                 break;
             }
 

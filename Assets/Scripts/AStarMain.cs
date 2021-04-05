@@ -49,21 +49,9 @@ public class AStarMain : MonoBehaviour
     public static EditMode EditMode;
 
     private Texture2D _texture2D;
-    private int x, y;
-    private int startX, startY;
-    private int finishX, finishY;
+    private int _x, _y;
 
     Coroutine coroutine;
-
-    private Dictionary<MarkType, Color> markColors = new Dictionary<MarkType, Color>
-    {
-        { MarkType.Closed, Color.green },
-        { MarkType.Start, Color.green },
-        { MarkType.Open, Color.red },
-        { MarkType.None, Color.white },
-        { MarkType.Finish, Color.red },
-        { MarkType.Path, Color.blue },
-    };
 
     private void Awake()
     {
@@ -74,8 +62,8 @@ public class AStarMain : MonoBehaviour
         MazeGenerator = new MazeGenerator();
         AStarAlgorithm = new AStarAlgorithm();
 
-        MazeGenerator.Generate(_mazeMap, _noizeSensitivity);
-        SetTexture();
+        MazeGenerator.GenerateMaze(_mazeMap, _noizeSensitivity);
+        _rawImage.texture = MazeGenerator.GenerateTexture();
 
         SetEditeModeHint(EditMode);
         SetResult(string.Empty);
@@ -88,8 +76,8 @@ public class AStarMain : MonoBehaviour
     {
         SetEditMode();
 
-        if (TryGetPixels(out x, out y))
-            EditMaze(x, y);
+        if (TryGetPixels(out _x, out _y))
+            EditMaze(_x, _y);
     }
 
     private bool TryGetPixels(out int x, out int y)
@@ -114,31 +102,18 @@ public class AStarMain : MonoBehaviour
         switch (EditMode)
         {
             case EditMode.Edit:
-                var t = 1 - MazeGenerator.GetMaze[x, y];
-                MazeGenerator.OnMazeEdit((RestrictionType)t, x, y);
-                _texture2D.SetPixel(x, y, t == 1 ? Color.black : Color.white);
+                MazeGenerator.EditCell(x, y);
                 break;
             case EditMode.SetStart:
-                if (MazeGenerator.GetMaze[x, y] != 0)
-                    break;
-                _texture2D.SetPixel(startX, startY, markColors[MarkType.None]);
-                _texture2D.SetPixel(x, y, markColors[MarkType.Start]);
-                startX = x;
-                startY = y;
+                MazeGenerator.SetStart(x, y);
                 break;
             case EditMode.SetFinish:
-                if (MazeGenerator.GetMaze[x, y] != 0)
-                    break;
-                _texture2D.SetPixel(finishX, finishY, markColors[MarkType.None]);
-                _texture2D.SetPixel(x, y, markColors[MarkType.Finish]);
-                finishX = x;
-                finishY = y;
+                MazeGenerator.SetFinish(x, y);
                 break;
             default:
+                SetResult("Nothing happens!\nYou've just clicked at x:" + x + " y:" + y);
                 break;
         }
-
-        _texture2D.Apply();
     }
 
     private void SetEditMode()
@@ -157,7 +132,7 @@ public class AStarMain : MonoBehaviour
     private void OnStartClick()
     {
         string result;
-        AStarAlgorithm.FindThePath(MazeGenerator.GetMaze, startX, startY, finishX, finishY, out MazeBuilder.Path, out MazeBuilder.Open, out MazeBuilder.Closed, out result, _heuristicFactor);
+        AStarAlgorithm.FindThePath(MazeGenerator, out MazeBuilder.Path, out MazeBuilder.Open, out MazeBuilder.Closed, out result, _heuristicFactor);
         SetResult(result);
 
         if (delay > 0)
@@ -171,62 +146,22 @@ public class AStarMain : MonoBehaviour
         if (coroutine != null)
             StopCoroutine(coroutine);
 
-        MazeGenerator.Generate(_mazeMap, _noizeSensitivity);
-        SetTexture();
-    }
-
-    private void SetTexture()
-    {
-        _texture2D = new Texture2D(_mazeMap.width, _mazeMap.height);
-
-        var index = 0;
-        var length = MazeGenerator.GetMaze.GetLength(0);
-
-        startX = startY = 0;
-        finishX = finishY = length - 1;
-
-        Color32[] color = new Color32[length * length];
-
-        for (int y = 0; y < length; y++)
-            for (int x = 0; x < length; x++)
-                color[index++] = MazeGenerator.GetMaze[x, y] == 1 ? Color.black : Color.white;
-
-
-        _texture2D.filterMode = FilterMode.Point;
-        _texture2D.SetPixels32(color);
-
-        _texture2D.SetPixel(startX, startY, markColors[MarkType.Start]);
-        _texture2D.SetPixel(finishX, finishY, markColors[MarkType.Finish]);
-
-        _texture2D.Apply();
-
-        _rawImage.texture = _texture2D;
-    }
-
-    private void SetEditeModeHint(EditMode editMode)
-    {
-        _editModeHint.text = "Current edit mode: " + editMode + "\n(press RMB to change)";
-    }
-
-    private void SetResult(string result)
-    {
-        _resultText.text = result;
+        MazeGenerator.GenerateMaze(_mazeMap, _noizeSensitivity);
+        _rawImage.texture = MazeGenerator.GenerateTexture();
     }
 
     private void ShowResult(List<Node> path, Dictionary<int, List<Node>> open, Dictionary<int, List<Node>> closed)
     {
         foreach (var pass in open)
             foreach (var item in pass.Value)
-                _texture2D.SetPixel(item.X, item.Y, markColors[MarkType.Open]);
+                MazeGenerator.MarkCell(item.X, item.Y, MarkType.Open);
 
         foreach (var pass in closed)
             foreach (var item in pass.Value)
-                _texture2D.SetPixel(item.X, item.Y, markColors[MarkType.Closed]);
+                MazeGenerator.MarkCell(item.X, item.Y, MarkType.Closed);
 
         foreach (var item in path)
-            _texture2D.SetPixel(item.X, item.Y, markColors[MarkType.Path]);
-
-        _texture2D.Apply();
+            MazeGenerator.MarkCell(item.X, item.Y, MarkType.Path);
     }
 
     private IEnumerator ShowPath()
@@ -244,10 +179,7 @@ public class AStarMain : MonoBehaviour
                 yield return new WaitForSeconds(delay);
 
                 foreach (var item in MazeBuilder.Open[i])
-                {
-                    _texture2D.SetPixel(item.X, item.Y, markColors[MarkType.Open]);
-                    _texture2D.Apply();
-                }
+                    MazeGenerator.MarkCell(item.X, item.Y, MarkType.Open);
             }
 
             if (MazeBuilder.Closed.ContainsKey(i))
@@ -255,10 +187,7 @@ public class AStarMain : MonoBehaviour
                 yield return new WaitForSeconds(delay);
 
                 foreach (var item in MazeBuilder.Closed[i])
-                {
-                    _texture2D.SetPixel(item.X, item.Y, markColors[MarkType.Closed]);
-                    _texture2D.Apply();
-                }
+                    MazeGenerator.MarkCell(item.X, item.Y, MarkType.Closed);
             }
         }
 
@@ -266,8 +195,11 @@ public class AStarMain : MonoBehaviour
         {
             yield return new WaitForSeconds(delay);
 
-            _texture2D.SetPixel(item.X, item.Y, markColors[MarkType.Path]);
-            _texture2D.Apply();
+            MazeGenerator.MarkCell(item.X, item.Y, MarkType.Path);
         }
     }
+
+    private void SetEditeModeHint(EditMode editMode) => _editModeHint.text = "Current edit mode: " + editMode + "\n(press RMB to change)";
+
+    private void SetResult(string result) => _resultText.text = result;
 }

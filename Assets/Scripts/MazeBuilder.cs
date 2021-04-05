@@ -14,7 +14,7 @@ public class MazeBuilder
     public Action<RestrictionType, int, int> MazeEdit;
 
 
-    public void Build(int[,] maze)
+    public Texture2D Build(int[,] maze)
     {
         for (int x = 0; x < maze.GetLength(0); x++)
         {
@@ -23,6 +23,8 @@ public class MazeBuilder
 
             }
         }
+
+        return null;
     }
 
     private void OnMark(MarkType markType, int x, int y)
