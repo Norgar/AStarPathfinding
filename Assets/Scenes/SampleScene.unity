@@ -1421,8 +1421,8 @@ MonoBehaviour:
   _buttonPause: {fileID: 1086634391}
   _mazeElement: {fileID: 2542722893168699905, guid: 114b3ca249372254383088e5c5d81855,
     type: 3}
-  HeuristicFactor: 4
-  _noizeSensitivity: 0
+  HeuristicFactor: 10
+  _noizeSensitivity: 0.5
   delay: -1
   _editMode: 0
 --- !u!4 &2071131867
