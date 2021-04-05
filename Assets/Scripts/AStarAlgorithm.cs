@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 public class AStarAlgorithm
 {
-    public void FindThePath(int[,] _maze, int startX, int startY, int endX, int endY, out List<Node> path, out Dictionary<int, List<Node>> open, out Dictionary<int, List<Node>> closed, int heuristicFactor)
+    public void FindThePath(int[,] _maze, int startX, int startY, int endX, int endY, out List<Node> path, out Dictionary<int, List<Node>> open, out Dictionary<int, List<Node>> closed, out string result, int heuristicFactor)
     {
         var counter = 0;
         var endReached = false;
@@ -65,8 +65,6 @@ public class AStarAlgorithm
             ++counter;
         }
 
-        Debug.Log("main a* time: " + sw.ElapsedMilliseconds + " ms");
-
         path = new List<Node>();
 
         if (endReached)
@@ -75,11 +73,10 @@ public class AStarAlgorithm
 
             path.Reverse();
 
-            Debug.Log("path count: " + path.Count);
-            Debug.Log("End point reached for " + counter + " movements and " + sw.ElapsedMilliseconds + " ms");
+            result = "End point reached!\nTime: " + sw.ElapsedMilliseconds + "ms\nPasses: " + counter;
         }
         else
-            Debug.Log("End point not reached!");
+            result = "End point couldn't be reached!";
 
         sw.Stop();
     }
@@ -104,7 +101,7 @@ public class AStarAlgorithm
         return list;
     }
 
-    private bool IsNodeInList(Node node, in List<Node> list) => list.Count(n => n.IsSame(node)) > 0;
+    private bool IsNodeInList(Node node, in List<Node> list) => list.Count(n => n.IsSamePosition(node)) > 0;
 
     private void GetPath(Node node, ref List<Node> path)
     {
@@ -120,7 +117,6 @@ public class AStarAlgorithm
 
 public class Node
 {
-    //const int HeuristicFactor = 14;
     const int DirectTransitionCost = 10;
     const int DiagonalTransitionCost = 14;
 
@@ -132,8 +128,8 @@ public class Node
     public int HCost { get; private set; }
     public int FCost => GCost + HCost;
 
-    public bool IsSame(Node node) => node.X == X && node.Y == Y;
-    public bool IsDiagonal(Node node) => node.X != X && node.Y != Y;
+    public bool IsSamePosition(Node node) => node.X == X && node.Y == Y;
+    public bool IsDiagonalTransition(Node node) => node.X != X && node.Y != Y;
 
     public Node(int x, int y)
     {
@@ -141,19 +137,13 @@ public class Node
         Y = y;
     }
 
-    public void SetParent(Node parent)
-    {
-        Parent = parent;
+    public void SetParent(Node parent) => Parent = parent;
 
-        if (Mathf.Abs(parent.X - X) > 1 || Mathf.Abs(parent.Y - Y) > 1)
-            Debug.LogError("Strange behaviour! Set parent x:" + parent.X + " y:" + parent.Y + " for node x: " + X + " Y:" + Y);
-    }
-
-    public int GetTransitionCostTo(Node node) => GCost + (IsDiagonal(node) ? DiagonalTransitionCost : DirectTransitionCost);
+    public int GetTransitionCostTo(Node node) => GCost + (IsDiagonalTransition(node) ? DiagonalTransitionCost : DirectTransitionCost);
 
     public void CalculateTransitions(Node node, Node end, int heuristicFactor)
     {
-        GCost = node.GCost + (IsDiagonal(node) ? DiagonalTransitionCost : DirectTransitionCost);
+        GCost = node.GCost + (IsDiagonalTransition(node) ? DiagonalTransitionCost : DirectTransitionCost);
         HCost = (Mathf.Abs(end.X - X) + Mathf.Abs(end.Y - Y)) * heuristicFactor;
     }
 }

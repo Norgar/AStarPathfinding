@@ -14,26 +14,15 @@ public class MazeBuilder
     public Action<RestrictionType, int, int> MazeEdit;
 
 
-    public void Build(int[,] maze, Transform mazeRoot, MazeElement mazeElementPrefab)
+    public void Build(int[,] maze)
     {
         for (int x = 0; x < maze.GetLength(0); x++)
         {
             for (int y = 0; y < maze.GetLength(0); y++)
             {
-                var mazeElement = UnityEngine.Object.Instantiate(mazeElementPrefab);
-                mazeElement.Set((RestrictionType)maze[x, y], x, y);
-                mazeElement.transform.SetParent(mazeRoot);
-                mazeElement.SetPosition(new Vector2(x, y) * 0.1f);
-                UpdateMark += mazeElement.UpdateMark;
-                mazeElement.Mark += OnMark;
-                mazeElement.Edit += OnEdit;
+
             }
         }
-
-        Start = Vector2.zero;
-        Finish = new Vector2(maze.GetUpperBound(0), maze.GetUpperBound(0));
-        mazeRoot.GetChild(0).GetComponent<MazeElement>().SetMark(MarkType.Start);
-        mazeRoot.GetChild(mazeRoot.childCount - 1).GetComponent<MazeElement>().SetMark(MarkType.Finish);
     }
 
     private void OnMark(MarkType markType, int x, int y)
@@ -95,10 +84,9 @@ public class MazeBuilder
 
             for (int x = 0; x < maze.GetLength(0); x++)
                 for (int y = 0; y < maze.GetLength(0); y++)
-                    mazeRoot.GetChild(index++).GetComponent<MazeElement>().Set((RestrictionType)maze[x, y], x, y);
+                { }
         }
 
-        mazeRoot.GetChild(0).GetComponent<MazeElement>().SetMark(MarkType.Start);
-        mazeRoot.GetChild(mazeRoot.childCount - 1).GetComponent<MazeElement>().SetMark(MarkType.Finish);
+
     }
 }
