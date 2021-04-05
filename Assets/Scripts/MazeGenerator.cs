@@ -27,7 +27,7 @@ public class MazeGenerator
     }
 
     /// <summary>
-    /// The method generate maze texture from maze array. Call CenerateMaze GenerateMaze(Texture2D, float) firstly.
+    /// The method generate maze texture based on maze array. Call GenerateMaze(Texture2D, float) firstly.
     /// </summary>
     /// <returns></returns>
     public Texture2D GenerateTexture()
