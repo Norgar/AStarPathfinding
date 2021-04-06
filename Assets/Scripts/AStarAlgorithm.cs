@@ -8,8 +8,8 @@ public class AStarAlgorithm
     {
         var counter = 0;
         var endReached = false;
-        List<Node> openList = new List<Node>() { mazeGenerator.Start };
-        List<Node> closedList = new List<Node>();
+        HashSet<Node> openList = new HashSet<Node>() { mazeGenerator.Start };
+        HashSet<Node> closedList = new HashSet<Node>();
         List<Node> neighbours;
         Node currentNode;
 
@@ -72,7 +72,7 @@ public class AStarAlgorithm
 
             resultDataCollector.Path.Reverse();
 
-            resultDataCollector.Result = "End point reached!\nTime: " + sw.ElapsedMilliseconds + "ms\nPasses: " + counter;
+            resultDataCollector.Result = "End point reached!\nTime: " + sw.ElapsedMilliseconds + "ms\nPasses: " + counter + "\nPath length: " + resultDataCollector.Path.Count;
         }
         else
             resultDataCollector.Result = "End point couldn't be reached!";
@@ -151,6 +151,7 @@ public class Node
 
     public override int GetHashCode()
     {
-        return base.GetHashCode();
+        int tmp = (Y + ((X + 1) / 2));
+        return X + (tmp * tmp);
     }
 }
