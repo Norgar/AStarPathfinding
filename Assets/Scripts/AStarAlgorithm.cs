@@ -68,10 +68,7 @@ public class AStarAlgorithm
 
         if (endReached)
         {
-            GetPath(closed.Last(), resultDataCollector.Path);
-
-            resultDataCollector.Path.Reverse();
-
+            BuildPath(closed.Last(), resultDataCollector.Path);
             resultDataCollector.Result = "End point reached!\nTime: " + sw.ElapsedMilliseconds + "ms\nPasses: " + counter + "\nPath length: " + resultDataCollector.Path.Count;
         }
         else
@@ -100,14 +97,17 @@ public class AStarAlgorithm
         return set;
     }
 
-    private void GetPath(Node node, List<Node> path)
+    private void BuildPath(Node node, List<Node> path)
     {
         if (node.Parent == null)
+        {
+            path.Reverse();
             return;
+        }
         else
         {
             path.Add(node);
-            GetPath(node.Parent, path);
+            BuildPath(node.Parent, path);
         }
     }
 }
