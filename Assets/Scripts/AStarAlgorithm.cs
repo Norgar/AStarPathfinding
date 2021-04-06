@@ -8,9 +8,9 @@ public class AStarAlgorithm
     {
         var counter = 0;
         var endReached = false;
-        HashSet<Node> openList = new HashSet<Node>() { mazeGenerator.Start };
-        HashSet<Node> closedList = new HashSet<Node>();
-        List<Node> neighbours;
+        HashSet<Node> open = new HashSet<Node>() { mazeGenerator.Start };
+        HashSet<Node> closed = new HashSet<Node>();
+        HashSet<Node> neighbours;
         Node currentNode;
 
         resultDataCollector.Open = new Dictionary<int, List<Node>>();
@@ -22,18 +22,18 @@ public class AStarAlgorithm
 
         while (true)
         {
-            currentNode = openList.OrderBy(i => i.FCost).First();
+            currentNode = open.OrderBy(i => i.FCost).First();
 
             resultDataCollector.Closed.Add(counter, new List<Node>() { currentNode });
 
-            closedList.Add(currentNode);
-            openList.Remove(currentNode);
+            closed.Add(currentNode);
+            open.Remove(currentNode);
 
             neighbours = GetNeighbours(currentNode, mazeGenerator.GetMaze);
 
             foreach (var n in neighbours)
             {
-                if (openList.Contains(n))
+                if (open.Contains(n))
                 {
                     if (n.GCost < currentNode.GCost)
                     {
@@ -41,22 +41,22 @@ public class AStarAlgorithm
                         n.CalculateTransitions(currentNode, mazeGenerator.Finish, heuristicFactor);
                     }
                 }
-                else if (!closedList.Contains(n))
+                else if (!closed.Contains(n))
                 {
                     if (resultDataCollector.Open.ContainsKey(counter))
                         resultDataCollector.Open[counter].Add(n);
                     else
                         resultDataCollector.Open.Add(counter, new List<Node> { n });
 
-                    openList.Add(n);
+                    open.Add(n);
                     n.SetParent(currentNode);
                     n.CalculateTransitions(currentNode, mazeGenerator.Finish, heuristicFactor);
                 }
             }
 
-            if (currentNode.Equals(mazeGenerator.Finish) || openList.Count == 0)
+            if (open.Contains(mazeGenerator.Finish) || open.Count == 0)
             {
-                endReached = currentNode.Equals(mazeGenerator.Finish);
+                endReached = open.Contains(mazeGenerator.Finish);
                 break;
             }
 
@@ -68,7 +68,7 @@ public class AStarAlgorithm
 
         if (endReached)
         {
-            GetPath(closedList.Last(), resultDataCollector.Path);
+            GetPath(closed.Last(), resultDataCollector.Path);
 
             resultDataCollector.Path.Reverse();
 
@@ -80,9 +80,9 @@ public class AStarAlgorithm
         sw.Stop();
     }
 
-    private List<Node> GetNeighbours(Node node, int[,] maze)
+    private HashSet<Node> GetNeighbours(Node node, int[,] maze)
     {
-        var list = new List<Node>();
+        var set = new HashSet<Node>();
 
         var mazeSize = maze.GetLength(0); //TODO Make size for non-quad maze
 
@@ -92,12 +92,12 @@ public class AStarAlgorithm
             {
                 if (x >= 0 && y >= 0 && x < mazeSize && y < mazeSize && maze[x, y] != 1)
                 {
-                    list.Add(new Node(x, y));
+                    set.Add(new Node(x, y));
                 }
             }
         }
 
-        return list;
+        return set;
     }
 
     private void GetPath(Node node, List<Node> path)
