@@ -1598,9 +1598,10 @@ MonoBehaviour:
   _buttonReset: {fileID: 873242860}
   _editModeHint: {fileID: 1103206809}
   _resultText: {fileID: 1518954768}
-  _heuristicFactor: 10
+  _heuristicFactor: 1
+  _transitionCost: 10
+  delay: -1
   _noizeSensitivity: 0.5
-  delay: 0.0005
 --- !u!4 &2071131867
 Transform:
   m_ObjectHideFlags: 0

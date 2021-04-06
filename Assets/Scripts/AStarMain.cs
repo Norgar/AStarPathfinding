@@ -39,8 +39,9 @@ public class AStarMain : MonoBehaviour
     [SerializeField] private TextMeshProUGUI _editModeHint;
     [SerializeField] private TextMeshProUGUI _resultText;
     [SerializeField] private int _heuristicFactor;
-    [SerializeField] [Range(0, 1)] private float _noizeSensitivity;
+    [SerializeField] private int _transitionCost;
     [SerializeField] private float delay;
+    [SerializeField] [Range(0, 1)] private float _noizeSensitivity;
 
     public MazeGenerator MazeGenerator;
     public AStarAlgorithm AStarAlgorithm;
@@ -129,7 +130,7 @@ public class AStarMain : MonoBehaviour
 
     private void OnStartClick()
     {
-        AStarAlgorithm.FindThePath(MazeGenerator, ResultDataCollector, _heuristicFactor);
+        AStarAlgorithm.FindThePath(MazeGenerator, ResultDataCollector, _transitionCost, _heuristicFactor);
         SetResultHint(ResultDataCollector.Result);
 
         if (delay > 0)

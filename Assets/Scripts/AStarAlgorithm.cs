@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 public class AStarAlgorithm
 {
-    public void FindThePath(MazeGenerator mazeGenerator, ResultDataCollector resultDataCollector, int heuristicFactor)
+    public void FindThePath(MazeGenerator mazeGenerator, ResultDataCollector resultDataCollector, int transitionCost, int heuristicFactor)
     {
         var counter = 0;
         var endReached = false;
@@ -38,10 +38,10 @@ public class AStarAlgorithm
                     if (n.GCost < currentNode.GCost)
                     {
                         n.SetParent(currentNode);
-                        n.CalculateTransitions(currentNode, mazeGenerator.Finish, heuristicFactor);
+                        n.CalculateTransitions(currentNode, mazeGenerator.Finish, transitionCost, heuristicFactor);
                     }
                 }
-                else if (!closed.Contains(n))
+                else if (!closed.Contains(n) && IsNodeAvailable(n, mazeGenerator.GetMaze))
                 {
                     if (resultDataCollector.Open.ContainsKey(counter))
                         resultDataCollector.Open[counter].Add(n);
@@ -50,7 +50,7 @@ public class AStarAlgorithm
 
                     open.Add(n);
                     n.SetParent(currentNode);
-                    n.CalculateTransitions(currentNode, mazeGenerator.Finish, heuristicFactor);
+                    n.CalculateTransitions(currentNode, mazeGenerator.Finish, transitionCost, heuristicFactor);
                 }
             }
 
@@ -79,22 +79,19 @@ public class AStarAlgorithm
 
     private HashSet<Node> GetNeighbours(Node node, int[,] maze)
     {
-        var set = new HashSet<Node>();
-
-        var mazeSize = maze.GetLength(0); //TODO Make size for non-quad maze
-
-        for (int x = node.X - 1; x <= node.X + 1; x++)
+        return new HashSet<Node>()
         {
-            for (int y = node.Y - 1; y <= node.Y + 1; y++)
-            {
-                if (x >= 0 && y >= 0 && x < mazeSize && y < mazeSize && maze[x, y] != 1)
-                {
-                    set.Add(new Node(x, y));
-                }
-            }
-        }
+            new Node(node.X+1, node.Y),
+            new Node(node.X-1, node.Y),
+            new Node(node.X , node.Y+1),
+            new Node(node.X , node.Y-1),
+        };
+    }
 
-        return set;
+    private bool IsNodeAvailable(Node node, in int[,] maze)
+    {
+        var size = maze.GetLength(0);
+        return node.X >= 0 && node.Y >= 0 && node.X < size && node.Y < size && maze[node.X, node.Y] != 1;
     }
 
     private void BuildPath(Node node, List<Node> path)
@@ -114,9 +111,6 @@ public class AStarAlgorithm
 
 public class Node
 {
-    const int DirectTransitionCost = 10;
-    const int DiagonalTransitionCost = 14;
-
     public Node Parent { get; private set; }
 
     public int X { get; private set; }
@@ -124,8 +118,6 @@ public class Node
     public int GCost { get; private set; }
     public int HCost { get; private set; }
     public int FCost => GCost + HCost;
-
-    public bool IsDiagonalTransition(Node node) => node.X != X && node.Y != Y;
 
     public Node(int x, int y)
     {
@@ -135,11 +127,9 @@ public class Node
 
     public void SetParent(Node parent) => Parent = parent;
 
-    public int GetTransitionCostTo(Node node) => GCost + (IsDiagonalTransition(node) ? DiagonalTransitionCost : DirectTransitionCost);
-
-    public void CalculateTransitions(Node node, Node end, int heuristicFactor)
+    public void CalculateTransitions(Node node, Node end, int transitionCost, int heuristicFactor)
     {
-        GCost = node.GCost + (IsDiagonalTransition(node) ? DiagonalTransitionCost : DirectTransitionCost);
+        GCost = node.GCost + transitionCost;
         HCost = (Mathf.Abs(end.X - X) + Mathf.Abs(end.Y - Y)) * heuristicFactor;
     }
 
@@ -151,7 +141,7 @@ public class Node
 
     public override int GetHashCode()
     {
-        int tmp = (Y + ((X + 1) / 2));
+        int tmp = Y + (X + 1) / 2;
         return X + (tmp * tmp);
     }
 }
