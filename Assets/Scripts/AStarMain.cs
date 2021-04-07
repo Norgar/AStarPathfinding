@@ -35,11 +35,10 @@ public class AStarMain : MonoBehaviour
     [SerializeField] private RawImage _rawImage;
     [SerializeField] private Texture2D _mazeMap;
     [SerializeField] private Button _buttonStart;
+    [SerializeField] private Button _buttonClear;
     [SerializeField] private Button _buttonReset;
     [SerializeField] private TextMeshProUGUI _editModeHint;
     [SerializeField] private TextMeshProUGUI _resultText;
-    [SerializeField] private int _heuristicFactor;
-    [SerializeField] private int _transitionCost;
     [SerializeField] private float delay;
     [SerializeField] [Range(0, 1)] private float _noizeSensitivity;
 
@@ -55,6 +54,7 @@ public class AStarMain : MonoBehaviour
     private void Awake()
     {
         _buttonStart.onClick.AddListener(OnStartClick);
+        _buttonClear.onClick.AddListener(OnClearClick);
         _buttonReset.onClick.AddListener(OnResetClick);
 
         ResultDataCollector = new ResultDataCollector();
@@ -130,7 +130,7 @@ public class AStarMain : MonoBehaviour
 
     private void OnStartClick()
     {
-        AStarAlgorithm.FindThePath(MazeGenerator, ResultDataCollector, _transitionCost, _heuristicFactor);
+        AStarAlgorithm.FindThePath(MazeGenerator, ResultDataCollector);
         SetResultHint(ResultDataCollector.Result);
 
         if (delay > 0)
@@ -146,6 +146,18 @@ public class AStarMain : MonoBehaviour
 
         MazeGenerator.GenerateMaze(_mazeMap, _noizeSensitivity);
         _rawImage.texture = MazeGenerator.GenerateTexture();
+    }
+
+    private void OnClearClick()
+    {
+        if (coroutine != null)
+            StopCoroutine(coroutine);
+
+        var start = MazeGenerator.Start;
+        var finish = MazeGenerator.End;
+        _rawImage.texture = MazeGenerator.GenerateTexture();
+        MazeGenerator.SetStart(start.X, start.Y);
+        MazeGenerator.SetFinish(finish.X, finish.Y);
     }
 
     private void ShowResultImmediate(List<Node> path, Dictionary<int, List<Node>> open, Dictionary<int, List<Node>> closed)

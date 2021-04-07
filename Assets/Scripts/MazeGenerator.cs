@@ -9,7 +9,7 @@ public class MazeGenerator
     public int[,] GetMaze => _maze;
 
     public Node Start { get; private set; }
-    public Node Finish { get; private set; }
+    public Node End { get; private set; }
 
     public void GenerateMaze(Texture2D mazeMap, float noizeSensitivity = 0.5f)
     {
@@ -60,6 +60,9 @@ public class MazeGenerator
 
     internal void SetStart(int x, int y)
     {
+        if (_maze[x, y] == 1)
+            return;
+
         if (Start != null)
             MarkCell(Start.X, Start.Y, MarkType.None);
 
@@ -69,15 +72,21 @@ public class MazeGenerator
 
     internal void SetFinish(int x, int y)
     {
-        if (Finish != null)
-            MarkCell(Finish.X, Finish.Y, MarkType.None);
+        if (_maze[x, y] == 1)
+            return;
 
-        Finish = new Node(x, y);
+        if (End != null)
+            MarkCell(End.X, End.Y, MarkType.None);
+
+        End = new Node(x, y);
         MarkCell(x, y, MarkType.Finish);
     }
 
     internal void EditCell(int x, int y)
     {
+        if (IsStartEndPoint(x, y))
+            return;
+
         _maze[x, y] = 1 - _maze[x, y];
         _texture.SetPixel(x, y, _maze[x, y] == 1 ? Color.black : Color.white);
         _texture.Apply();
@@ -111,5 +120,11 @@ public class MazeGenerator
 
         _texture.SetPixel(x, y, color);
         _texture.Apply();
+    }
+
+    private bool IsStartEndPoint(int x, int y)
+    {
+        var n = new Node(x, y);
+        return n.Equals(Start) || n.Equals(End);
     }
 }

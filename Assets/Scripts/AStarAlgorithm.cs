@@ -4,82 +4,76 @@ using System.Collections.Generic;
 
 public class AStarAlgorithm
 {
-    public void FindThePath(MazeGenerator mazeGenerator, ResultDataCollector resultDataCollector, int transitionCost, int heuristicFactor)
+    public void FindThePath(MazeGenerator generator, ResultDataCollector collector)
     {
+        Node node;
         var counter = 0;
-        var endReached = false;
-        HashSet<Node> open = new HashSet<Node>() { mazeGenerator.Start };
-        HashSet<Node> closed = new HashSet<Node>();
-        HashSet<Node> neighbours;
-        Node currentNode;
-
-        resultDataCollector.Open = new Dictionary<int, List<Node>>();
-        resultDataCollector.Closed = new Dictionary<int, List<Node>>();
-
+        var maze = generator.GetMaze;
+        var open = new HashSet<Node>() { generator.Start };
+        var closed = new HashSet<Node>();
         var sw = new System.Diagnostics.Stopwatch();
+        collector.Open = new Dictionary<int, List<Node>>();
+        collector.Closed = new Dictionary<int, List<Node>>();
 
         sw.Start();
 
-        while (true)
+        while (!open.Contains(generator.End) && open.Any())
         {
-            currentNode = open.OrderBy(i => i.FCost).First();
+            node = open.OrderBy(n => n.FCost).ThenByDescending(n => n.GCost).First();
 
-            resultDataCollector.Closed.Add(counter, new List<Node>() { currentNode });
+            collector.Closed.Add(counter, new List<Node>() { node });
 
-            closed.Add(currentNode);
-            open.Remove(currentNode);
+            closed.Add(node);
+            open.Remove(node);
 
-            neighbours = GetNeighbours(currentNode, mazeGenerator.GetMaze);
+            var neighbours = GetNeighbours(node);
 
             foreach (var n in neighbours)
             {
-                if (open.Contains(n))
+                if (!closed.Contains(n) && IsNodeAvailable(n, maze))
                 {
-                    if (n.GCost < currentNode.GCost)
+                    if (collector.Open.ContainsKey(counter))
+                        collector.Open[counter].Add(n);
+                    else
+                        collector.Open.Add(counter, new List<Node> { n });
+
+                    if (open.Contains(n))
                     {
-                        n.SetParent(currentNode);
-                        n.CalculateTransitions(currentNode, mazeGenerator.Finish, transitionCost, heuristicFactor);
+                        if (n.GCost < node.GCost)
+                        {
+                            n.SetParent(node);
+                            n.Estimate(node, generator.End);
+                        }
+                    }
+                    else
+                    {
+                        open.Add(n);
+                        n.SetParent(node);
+                        n.Estimate(node, generator.End);
                     }
                 }
-                else if (!closed.Contains(n) && IsNodeAvailable(n, mazeGenerator.GetMaze))
-                {
-                    if (resultDataCollector.Open.ContainsKey(counter))
-                        resultDataCollector.Open[counter].Add(n);
-                    else
-                        resultDataCollector.Open.Add(counter, new List<Node> { n });
-
-                    open.Add(n);
-                    n.SetParent(currentNode);
-                    n.CalculateTransitions(currentNode, mazeGenerator.Finish, transitionCost, heuristicFactor);
-                }
-            }
-
-            if (open.Contains(mazeGenerator.Finish) || open.Count == 0)
-            {
-                endReached = open.Contains(mazeGenerator.Finish);
-                break;
             }
 
             ++counter;
         }
 
-        resultDataCollector.Passes = counter;
-        resultDataCollector.Path = new List<Node>();
+        collector.Passes = counter;
+        collector.Path = new List<Node>();
 
-        if (endReached)
+        if (open.Contains(generator.End))
         {
-            BuildPath(closed.Last(), resultDataCollector.Path);
-            resultDataCollector.Result = "End point reached!\nTime: " + sw.ElapsedMilliseconds + "ms\nPasses: " + counter + "\nPath length: " + resultDataCollector.Path.Count;
+            BuildPath(closed.Last(), collector.Path);
+            collector.Result = "End point reached!\nTime: " + sw.ElapsedMilliseconds + "ms\nPasses: " + counter + "\nPath length: " + collector.Path.Count;
         }
         else
-            resultDataCollector.Result = "End point couldn't be reached!";
+            collector.Result = "End point couldn't be reached!";
 
         sw.Stop();
     }
 
-    private HashSet<Node> GetNeighbours(Node node, int[,] maze)
+    private Node[] GetNeighbours(Node node)
     {
-        return new HashSet<Node>()
+        return new Node[]
         {
             new Node(node.X+1, node.Y),
             new Node(node.X-1, node.Y),
@@ -127,10 +121,11 @@ public class Node
 
     public void SetParent(Node parent) => Parent = parent;
 
-    public void CalculateTransitions(Node node, Node end, int transitionCost, int heuristicFactor)
+    public void Estimate(Node node, Node end)
     {
-        GCost = node.GCost + transitionCost;
-        HCost = (Mathf.Abs(end.X - X) + Mathf.Abs(end.Y - Y)) * heuristicFactor;
+        GCost = node.GCost + 1;
+        //HCost = Mathf.Abs(end.X - X) + Mathf.Abs(end.Y - Y);
+        HCost = (int)(Mathf.Pow(end.X - X, 2) + Mathf.Pow(end.Y - Y, 2));
     }
 
     public override bool Equals(object obj)
