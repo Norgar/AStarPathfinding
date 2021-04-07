@@ -53,7 +53,7 @@ public class MazeGenerator
         _texture.Apply();
 
         SetStart(0, 0);
-        SetFinish(size - 1, size - 1);
+        SetEnd(size - 1, size - 1);
 
         return _texture;
     }
@@ -70,7 +70,7 @@ public class MazeGenerator
         MarkCell(x, y, MarkType.Start);
     }
 
-    internal void SetFinish(int x, int y)
+    internal void SetEnd(int x, int y)
     {
         if (_maze[x, y] == 1)
             return;
@@ -79,7 +79,7 @@ public class MazeGenerator
             MarkCell(End.X, End.Y, MarkType.None);
 
         End = new Node(x, y);
-        MarkCell(x, y, MarkType.Finish);
+        MarkCell(x, y, MarkType.End);
     }
 
     internal void EditCell(int x, int y)
@@ -104,7 +104,7 @@ public class MazeGenerator
             case MarkType.Start:
                 color = Color.green;
                 break;
-            case MarkType.Finish:
+            case MarkType.End:
                 color = Color.red;
                 break;
             case MarkType.Open:

@@ -7,6 +7,7 @@ public class AStarAlgorithm
     public void FindThePath(MazeGenerator generator, ResultDataCollector collector)
     {
         Node node;
+        var cost = 1;
         var counter = 0;
         var maze = generator.GetMaze;
         var open = new HashSet<Node>() { generator.Start };
@@ -19,7 +20,7 @@ public class AStarAlgorithm
 
         while (!open.Contains(generator.End) && open.Any())
         {
-            node = open.OrderBy(n => n.FCost).ThenByDescending(n => n.GCost).First();
+            node = open.OrderBy(n => n.FCost)./*ThenByDescending(n => n.GCost).*/First();
 
             collector.Closed.Add(counter, new List<Node>() { node });
 
@@ -41,15 +42,16 @@ public class AStarAlgorithm
                     {
                         if (n.GCost < node.GCost)
                         {
-                            n.SetParent(node);
-                            n.Estimate(node, generator.End);
+                            node.SetParent(n);
+                            node.SetCost(n.GCost + cost);
                         }
                     }
                     else
                     {
                         open.Add(n);
                         n.SetParent(node);
-                        n.Estimate(node, generator.End);
+                        n.Estimate(generator.End);
+                        n.SetCost(node.GCost + cost);
                     }
                 }
             }
@@ -121,11 +123,11 @@ public class Node
 
     public void SetParent(Node parent) => Parent = parent;
 
-    public void Estimate(Node node, Node end)
+    public void SetCost(int cost) => GCost = cost;
+
+    public void Estimate(Node end)
     {
-        GCost = node.GCost + 1;
-        //HCost = Mathf.Abs(end.X - X) + Mathf.Abs(end.Y - Y);
-        HCost = (int)(Mathf.Pow(end.X - X, 2) + Mathf.Pow(end.Y - Y, 2));
+        HCost = Mathf.Abs(end.X - X) + Mathf.Abs(end.Y - Y);
     }
 
     public override bool Equals(object obj)

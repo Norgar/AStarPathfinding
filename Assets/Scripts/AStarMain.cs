@@ -14,8 +14,8 @@ public enum MarkType
 {
     None,
     Path,
+    End,
     Start,
-    Finish,
     Open,
     Closed
 }
@@ -24,8 +24,8 @@ public enum EditMode
 {
     None,
     Edit,
+    SetEnd,
     SetStart,
-    SetFinish,
 }
 
 public class AStarMain : MonoBehaviour
@@ -106,8 +106,8 @@ public class AStarMain : MonoBehaviour
             case EditMode.SetStart:
                 MazeGenerator.SetStart(x, y);
                 break;
-            case EditMode.SetFinish:
-                MazeGenerator.SetFinish(x, y);
+            case EditMode.SetEnd:
+                MazeGenerator.SetEnd(x, y);
                 break;
             default:
                 SetResultHint("Nothing happens!\nYou've just clicked at x:" + x + " y:" + y);
@@ -121,7 +121,7 @@ public class AStarMain : MonoBehaviour
         {
             ++EditMode;
 
-            if (EditMode > EditMode.SetFinish)
+            if (EditMode > EditMode.SetStart)
                 EditMode = 0;
 
             SetEditeModeHint(EditMode);
@@ -157,7 +157,7 @@ public class AStarMain : MonoBehaviour
         var finish = MazeGenerator.End;
         _rawImage.texture = MazeGenerator.GenerateTexture();
         MazeGenerator.SetStart(start.X, start.Y);
-        MazeGenerator.SetFinish(finish.X, finish.Y);
+        MazeGenerator.SetEnd(finish.X, finish.Y);
     }
 
     private void ShowResultImmediate(List<Node> path, Dictionary<int, List<Node>> open, Dictionary<int, List<Node>> closed)
