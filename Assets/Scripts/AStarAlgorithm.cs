@@ -14,46 +14,55 @@ public class AStarAlgorithm
         var closed = new HashSet<Node>();
         var sw = new System.Diagnostics.Stopwatch();
         collector.Open = new Dictionary<int, List<Node>>();
-        collector.Closed = new Dictionary<int, List<Node>>();
+        collector.Closed = new Dictionary<int, Node>();
 
         sw.Start();
 
         while (!open.Contains(generator.End) && open.Any())
         {
-            node = open.OrderBy(n => n.FCost)./*ThenByDescending(n => n.GCost).*/First();
+            node = open.OrderBy(n => n.FCost).First();
 
-            collector.Closed.Add(counter, new List<Node>() { node });
+            collector.Closed.Add(counter, node);
 
             closed.Add(node);
             open.Remove(node);
 
+            //if (counter < 10)
+            //    Debug.Log(node);
+
             var neighbours = GetNeighbours(node);
 
-            foreach (var n in neighbours)
+            foreach (var item in neighbours)
             {
-                if (!closed.Contains(n) && IsNodeAvailable(n, maze))
-                {
-                    if (collector.Open.ContainsKey(counter))
-                        collector.Open[counter].Add(n);
-                    else
-                        collector.Open.Add(counter, new List<Node> { n });
+                var n = item;
 
-                    if (open.Contains(n))
+                if (closed.Contains(n) || !IsNodeAvailable(n, maze))
+                    continue;
+
+                if (open.Contains(n))
+                    n = open.First(o => o.Equals(n));
+
+                if (collector.Open.ContainsKey(counter))
+                    collector.Open[counter].Add(n);
+                else
+                    collector.Open.Add(counter, new List<Node> { n });
+
+                if (open.Contains(n))
+                {
+                    if (n.GCost + cost < node.GCost) // +cost give us more smooth path
                     {
-                        if (n.GCost < node.GCost)
-                        {
-                            node.SetParent(n);
-                            node.SetCost(n.GCost + cost);
-                        }
-                    }
-                    else
-                    {
-                        open.Add(n);
-                        n.SetParent(node);
-                        n.Estimate(generator.End);
-                        n.SetCost(node.GCost + cost);
+                        node.SetParent(n);
+                        node.SetCost(n.GCost + cost);
                     }
                 }
+                else
+                {
+                    open.Add(n);
+                    n.SetParent(node);
+                    n.Estimate(generator.End);
+                    n.SetCost(node.GCost + cost);
+                }
+
             }
 
             ++counter;
@@ -128,6 +137,7 @@ public class Node
     public void Estimate(Node end)
     {
         HCost = Mathf.Abs(end.X - X) + Mathf.Abs(end.Y - Y);
+        //HCost = (int)(Mathf.Pow(end.X - X, 2) + Mathf.Pow(end.Y - Y, 2));
     }
 
     public override bool Equals(object obj)
@@ -138,7 +148,18 @@ public class Node
 
     public override int GetHashCode()
     {
-        int tmp = Y + (X + 1) / 2;
-        return X + (tmp * tmp);
+        int hash = Y << sizeof(int) / 2;
+        hash |= X;
+        return hash;
+
+        //int tmp = Y + (X + 1) / 2;
+        //return X + (tmp * tmp);
+    }
+
+    public override string ToString()
+    {
+        return "node x:" + X + " y:" + Y
+            + "\t\t\tg:" + GCost + "\th:" + HCost + "\tf:" + FCost
+            + "\tp.x:" + Parent?.X + " p.y:" + Parent?.Y;
     }
 }
