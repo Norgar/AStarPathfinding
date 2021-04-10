@@ -47,22 +47,18 @@ public class AStarAlgorithm
                 else
                     collector.Open.Add(counter, new List<Node> { n });
 
-                if (open.Contains(n))
-                {
-                    if (n.GCost + cost < node.GCost) // +cost give us more smooth path
-                    {
-                        node.SetParent(n);
-                        node.SetCost(n.GCost + cost);
-                    }
-                }
-                else
+                if (!open.Contains(n))
                 {
                     open.Add(n);
                     n.SetParent(node);
                     n.Estimate(generator.End);
                     n.SetCost(node.GCost + cost);
                 }
-
+                else if (IsLowerCostWay(node, n, cost))
+                {
+                    node.SetParent(n);
+                    node.SetCost(n.GCost + cost);
+                }
             }
 
             ++counter;
@@ -97,6 +93,11 @@ public class AStarAlgorithm
     {
         var size = maze.GetLength(0);
         return node.X >= 0 && node.Y >= 0 && node.X < size && node.Y < size && maze[node.X, node.Y] != 1;
+    }
+
+    private bool IsLowerCostWay(Node current, Node neighbour, int transitionCost)
+    {
+        return neighbour.GCost + transitionCost < current.GCost;
     }
 
     private void BuildPath(Node node, List<Node> path)
