@@ -27,9 +27,6 @@ public class AStarAlgorithm
             closed.Add(node);
             open.Remove(node);
 
-            //if (counter < 10)
-            //    Debug.Log(node);
-
             var neighbours = GetNeighbours(node);
 
             foreach (var item in neighbours)
@@ -137,8 +134,8 @@ public class Node
 
     public void Estimate(Node end)
     {
-        HCost = Mathf.Abs(end.X - X) + Mathf.Abs(end.Y - Y);
-        //HCost = (int)(Mathf.Pow(end.X - X, 2) + Mathf.Pow(end.Y - Y, 2));
+        //HCost = Mathf.Abs(end.X - X) + Mathf.Abs(end.Y - Y);
+        HCost = (int)(Mathf.Pow(end.X - X, 2) + Mathf.Pow(end.Y - Y, 2));
     }
 
     public override bool Equals(object obj)
@@ -149,12 +146,8 @@ public class Node
 
     public override int GetHashCode()
     {
-        int hash = Y << sizeof(int) / 2;
-        hash |= X;
-        return hash;
-
-        //int tmp = Y + (X + 1) / 2;
-        //return X + (tmp * tmp);
+        int tmp = Y + (X + 1) / 2;
+        return X + (tmp * tmp);
     }
 
     public override string ToString()
