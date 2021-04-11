@@ -2,7 +2,6 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
-using System.Collections.Generic;
 
 public enum RestrictionType
 {
@@ -138,7 +137,7 @@ public class AStarMain : MonoBehaviour
         if (delay > 0)
             coroutine = StartCoroutine(ShowResultBySteps());
         else
-            ShowResultImmediate(ResultDataCollector.Path, ResultDataCollector.Open, ResultDataCollector.Closed);
+            ShowResultImmediate();
     }
 
     private void OnResetClick()
@@ -162,16 +161,16 @@ public class AStarMain : MonoBehaviour
         MazeGenerator.SetEnd(finish.X, finish.Y);
     }
 
-    private void ShowResultImmediate(List<Node> path, Dictionary<int, List<Node>> open, Dictionary<int, Node> closed)
+    private void ShowResultImmediate()
     {
-        foreach (var pass in open)
+        foreach (var pass in ResultDataCollector.Open)
             foreach (var item in pass.Value)
                 MazeGenerator.MarkCell(item.X, item.Y, MarkType.Open);
 
-        foreach (var item in closed)
+        foreach (var item in ResultDataCollector.Closed)
             MazeGenerator.MarkCell(item.Value.X, item.Value.Y, MarkType.Closed);
 
-        foreach (var item in path)
+        foreach (var item in ResultDataCollector.Path)
             MazeGenerator.MarkCell(item.X, item.Y, MarkType.Path);
     }
 
@@ -191,8 +190,8 @@ public class AStarMain : MonoBehaviour
             {
                 yield return new WaitForSeconds(delay);
 
-                foreach (var item in ResultDataCollector.Closed)
-                    MazeGenerator.MarkCell(item.Value.X, item.Value.Y, MarkType.Closed);
+                var item = ResultDataCollector.Closed[i];
+                MazeGenerator.MarkCell(item.X, item.Y, MarkType.Closed);
             }
         }
 
