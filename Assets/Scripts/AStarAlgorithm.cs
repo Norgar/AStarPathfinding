@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 using System.Linq;
 using System.Collections.Generic;
-using System;
 
 public class AStarAlgorithm
 {
@@ -20,7 +19,6 @@ public class AStarAlgorithm
 
         sw.Start();
 
-
         while (!open.ContainsKey(generator.End.GetHashCode()) && open.Any())
         {
             minCost = open.Values.Min(m => m.FCost);
@@ -38,8 +36,6 @@ public class AStarAlgorithm
                 var n = open.ContainsKey(item.GetHashCode())
                     ? open[item.GetHashCode()]
                     : item;
-
-                //var n = item;
 
                 if (closed.Contains(n) || !IsNodeAvailable(n, maze))
                     continue;
@@ -153,12 +149,5 @@ public class Node
     {
         int tmp = Y + (X + 1) / 2;
         return X + (tmp * tmp);
-    }
-
-    public override string ToString()
-    {
-        return "node x:" + X + " y:" + Y
-            + "\t\t\tg:" + GCost + "\th:" + HCost + "\tf:" + FCost
-            + "\tp.x:" + Parent?.X + " p.y:" + Parent?.Y;
     }
 }
