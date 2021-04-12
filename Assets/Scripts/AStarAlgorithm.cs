@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Linq;
 using System.Collections.Generic;
+using System;
 
 public class AStarAlgorithm
 {
@@ -8,9 +9,10 @@ public class AStarAlgorithm
     {
         Node node;
         var cost = 1;
+        var minCost = 0;
         var counter = 0;
         var maze = generator.GetMaze;
-        var open = new HashSet<Node>() { generator.Start };
+        var open = new Dictionary<int, Node>() { { generator.Start.GetHashCode(), generator.Start } };
         var closed = new HashSet<Node>();
         var sw = new System.Diagnostics.Stopwatch();
         collector.Open = new Dictionary<int, List<Node>>();
@@ -18,38 +20,41 @@ public class AStarAlgorithm
 
         sw.Start();
 
-        while (!open.Contains(generator.End) && open.Any())
+
+        while (!open.ContainsKey(generator.End.GetHashCode()) && open.Any())
         {
-            node = open.OrderBy(n => n.FCost).First();
+            minCost = open.Values.Min(m => m.FCost);
+            node = open.Values.First(n => n.FCost == minCost);
 
             collector.Closed.Add(counter, node);
 
             closed.Add(node);
-            open.Remove(node);
+            open.Remove(node.GetHashCode());
 
             var neighbours = GetNeighbours(node);
 
             foreach (var item in neighbours)
             {
-                var n = item;
+                var n = open.ContainsKey(item.GetHashCode())
+                    ? open[item.GetHashCode()]
+                    : item;
+
+                //var n = item;
 
                 if (closed.Contains(n) || !IsNodeAvailable(n, maze))
                     continue;
-
-                if (open.Contains(n))
-                    n = open.First(o => o.Equals(n));
 
                 if (collector.Open.ContainsKey(counter))
                     collector.Open[counter].Add(n);
                 else
                     collector.Open.Add(counter, new List<Node> { n });
 
-                if (!open.Contains(n))
+                if (!open.ContainsKey(n.GetHashCode()))
                 {
-                    open.Add(n);
                     n.SetParent(node);
                     n.Estimate(generator.End);
                     n.SetCost(node.GCost + cost);
+                    open.Add(n.GetHashCode(), n);
                 }
                 else if (IsLowerCostWay(node, n, cost))
                 {
@@ -64,7 +69,7 @@ public class AStarAlgorithm
         collector.Passes = counter;
         collector.Path = new List<Node>();
 
-        if (open.Contains(generator.End))
+        if (open.ContainsKey(generator.End.GetHashCode()))
         {
             BuildPath(closed.Last(), collector.Path);
             collector.Result = "End point reached!\nTime: " + sw.ElapsedMilliseconds + "ms\nPasses: " + counter + "\nPath length: " + collector.Path.Count;
@@ -134,8 +139,8 @@ public class Node
 
     public void Estimate(Node end)
     {
-        //HCost = Mathf.Abs(end.X - X) + Mathf.Abs(end.Y - Y);
-        HCost = (int)(Mathf.Pow(end.X - X, 2) + Mathf.Pow(end.Y - Y, 2));
+        HCost = Mathf.Abs(end.X - X) + Mathf.Abs(end.Y - Y);
+        //HCost = (int)(Mathf.Pow(end.X - X, 2) + Mathf.Pow(end.Y - Y, 2));
     }
 
     public override bool Equals(object obj)
