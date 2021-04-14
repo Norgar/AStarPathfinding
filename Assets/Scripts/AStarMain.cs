@@ -16,7 +16,8 @@ public enum MarkType
     End,
     Start,
     Open,
-    Closed
+    Closed,
+    WayPoint
 }
 
 public enum EditMode
@@ -62,6 +63,7 @@ public class AStarMain : MonoBehaviour
 
         MazeGenerator.GenerateMaze(_mazeMap, _noizeSensitivity);
         _rawImage.texture = MazeGenerator.GenerateTexture();
+        MazeGenerator.GenerateWayPoints();
 
         SetEditeModeHint(EditMode);
         SetResultHint(string.Empty);
@@ -147,6 +149,7 @@ public class AStarMain : MonoBehaviour
 
         MazeGenerator.GenerateMaze(_mazeMap, _noizeSensitivity);
         _rawImage.texture = MazeGenerator.GenerateTexture();
+        MazeGenerator.GenerateWayPoints();
     }
 
     private void OnClearClick()
@@ -159,6 +162,7 @@ public class AStarMain : MonoBehaviour
         _rawImage.texture = MazeGenerator.GenerateTexture();
         MazeGenerator.SetStart(start.X, start.Y);
         MazeGenerator.SetEnd(finish.X, finish.Y);
+        MazeGenerator.GenerateWayPoints();
     }
 
     private void ShowResultImmediate()
