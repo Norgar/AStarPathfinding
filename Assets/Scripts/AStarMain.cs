@@ -17,7 +17,8 @@ public enum MarkType
     Start,
     Open,
     Closed,
-    WayPoint
+    WayPoint,
+    WayPointPort
 }
 
 public enum EditMode

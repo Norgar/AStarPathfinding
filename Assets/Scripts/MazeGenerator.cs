@@ -9,6 +9,7 @@ public class MazeGenerator
     public int[,] GetMaze => _maze;
 
     public Dictionary<Node, List<Node>> WayPointsGrid { get; private set; }
+    public Dictionary<Node, List<Node>> WayPointPorts { get; private set; }
     public List<Node> WayPoints { get; private set; }
     public Node Start { get; private set; }
     public Node End { get; private set; }
@@ -19,6 +20,9 @@ public class MazeGenerator
         x >= _maze.GetLength(0) ||
         y >= _maze.GetLength(0) ||
         _maze[x, y] == 1;
+
+    private bool IsObstacleCollide(int x, int y, Node a, Node b) =>
+        MathHelper.IsRectIntersect(a.X + 0.5f, a.Y + 0.5f, b.X + 0.5f, b.Y + 0.5f, x, y, 1, 1);
 
     public void GenerateMaze(Texture2D mazeMap, float noizeSensitivity = 0.5f)
     {
@@ -37,95 +41,118 @@ public class MazeGenerator
 
     public void GenerateWayPoints()
     {
+        if (Start == null)
+            return;
+
+        if (End == null)
+            return;
+
         var size = _maze.GetLength(0);
-        var wplist = new List<int[]>();
+        var wplist = new Dictionary<int[], List<int[]>>();
 
         for (int x = 0; x < size; x++)
         {
             for (int y = 0; y < size; y++)
             {
-
                 if (_maze[x, y] == 0)
-                {
-                    // maze corners
-                    //if ((x == 0 || x == size - 1) && (y == 0 || y == size - 1))
-                    //    wplist.Add(new int[] { x, y });
-
                     continue;
+
+                if (!IsObstacle(x + 1, y) && !IsObstacle(x, y + 1) && !IsObstacle(x, y - 1))
+                {
+                    wplist.Add(
+                        new int[] { x + 1, y },
+                        new List<int[]>
+                        {
+                            new int[] { x + 1, y + 1 },
+                            new int[] { x + 1, y - 1 }
+                        });
                 }
+                else if (!IsObstacle(x, y + 1) && !IsObstacle(x + 1, y) && !IsObstacle(x - 1, y))
+                {
+                    wplist.Add(
+                        new int[] { x, y + 1 },
+                        new List<int[]>
+                        {
+                            new int[] { x + 1, y + 1 },
+                            new int[] { x - 1, y + 1 }
+                        });
+                }
+                else if (!IsObstacle(x - 1, y) && !IsObstacle(x, y + 1) && !IsObstacle(x, y - 1))
+                {
+                    wplist.Add(
+                        new int[] { x - 1, y },
+                        new List<int[]>
+                        {
+                            new int[] { x - 1, y + 1 },
+                            new int[] { x - 1, y - 1 }
+                        });
+                }
+                else if (!IsObstacle(x, y - 1) && !IsObstacle(x + 1, y) && !IsObstacle(x - 1, y))
+                {
+                    wplist.Add(
+                        new int[] { x, y - 1 },
+                        new List<int[]>
+                        {
+                            new int[] { x + 1, y - 1 },
+                            new int[] { x - 1, y - 1 }
+                        });
+                }
+                else
+                {
+                    if (!IsObstacle(x + 1, y + 1) && !IsObstacle(x, y + 1) && !IsObstacle(x + 1, y))
+                        wplist.Add(new int[] { x + 1, y + 1 }, new List<int[]>());
 
-                // inner corners
-                //if (!IsObstacle(x + 1, y + 1) && IsObstacle(x, y + 1) && IsObstacle(x + 1, y))
-                //    wplist.Add(new int[] { x + 1, y + 1 });
+                    if (!IsObstacle(x + 1, y - 1) && !IsObstacle(x, y - 1) && !IsObstacle(x + 1, y))
+                        wplist.Add(new int[] { x + 1, y - 1 }, new List<int[]>());
 
-                //if (!IsObstacle(x + 1, y - 1) && IsObstacle(x, y - 1) && IsObstacle(x + 1, y))
-                //    wplist.Add(new int[] { x + 1, y - 1 });
+                    if (!IsObstacle(x - 1, y + 1) && !IsObstacle(x, y + 1) && !IsObstacle(x - 1, y))
+                        wplist.Add(new int[] { x - 1, y + 1 }, new List<int[]>());
 
-                //if (!IsObstacle(x - 1, y + 1) && IsObstacle(x, y + 1) && IsObstacle(x - 1, y))
-                //    wplist.Add(new int[] { x - 1, y + 1 });
-
-                //if (!IsObstacle(x - 1, y - 1) && IsObstacle(x, y - 1) && IsObstacle(x - 1, y))
-                //    wplist.Add(new int[] { x - 1, y - 1 });
-
-                // outter corners
-                if (!IsObstacle(x + 1, y + 1) && !IsObstacle(x, y + 1) && !IsObstacle(x + 1, y))
-                    wplist.Add(new int[] { x + 1, y + 1 });
-
-                if (!IsObstacle(x + 1, y - 1) && !IsObstacle(x, y - 1) && !IsObstacle(x + 1, y))
-                    wplist.Add(new int[] { x + 1, y - 1 });
-
-                if (!IsObstacle(x - 1, y + 1) && !IsObstacle(x, y + 1) && !IsObstacle(x - 1, y))
-                    wplist.Add(new int[] { x - 1, y + 1 });
-
-                if (!IsObstacle(x - 1, y - 1) && !IsObstacle(x, y - 1) && !IsObstacle(x - 1, y))
-                    wplist.Add(new int[] { x - 1, y - 1 });
-
-                //if ((x == 0 || x == size - 1) && y > 0 && IsObstacle(x, y))
-                //{
-                //    wplist.Add(new int[] { x, y + 1 });
-                //    wplist.Add(new int[] { x, y - 1 });
-                //}
-
-                //if ((y == 0 || y == size - 1) && x > 0 && IsObstacle(x, y))
-                //{
-                //    wplist.Add(new int[] { x + 1, y });
-                //    wplist.Add(new int[] { x - 1, y });
-                //}
-
-
-
+                    if (!IsObstacle(x - 1, y - 1) && !IsObstacle(x, y - 1) && !IsObstacle(x - 1, y))
+                        wplist.Add(new int[] { x - 1, y - 1 }, new List<int[]>());
+                }
             }
         }
 
         WayPoints = new List<Node>();
+        WayPointPorts = new Dictionary<Node, List<Node>>();
         WayPointsGrid = new Dictionary<Node, List<Node>>();
 
         WayPoints.Clear();
         WayPointsGrid.Clear();
 
-
         WayPoints.Add(Start);
 
         foreach (var item in wplist)
         {
-            var wpNode = new Node(item[0], item[1]);
+            var wpNode = new Node(item.Key[0], item.Key[1]);
             wpNode.IsTracked = false;
             wpNode.Estimate(End);
             //wpNode.EstimateG(Start);
             WayPoints.Add(wpNode);
-            MarkCell(item[0], item[1], MarkType.WayPoint);
+            MarkCell(item.Key[0], item.Key[1], MarkType.WayPoint);
+
+            if (item.Value.Count > 0)
+            {
+                WayPointPorts.Add(wpNode, new List<Node>());
+                foreach (var port in item.Value)
+                {
+                    WayPointPorts[wpNode].Add(new Node(port[0], port[1]));
+                    MarkCell(port[0], port[1], MarkType.WayPointPort);
+                }
+            }
         }
 
         WayPoints.Add(End);
 
-        Debug.Log("wp count: " + wplist.Count);
+        //Debug.Log("wp count: " + wplist.Count);
 
-        var wpstr = string.Empty;
+        //var wpstr = string.Empty;
 
-        foreach (var item in WayPoints)
-            wpstr += item.X + ":" + item.Y + " - ";
+        //foreach (var item in WayPoints)
+        //    wpstr += item.X + ":" + item.Y + " - ";
 
-        Debug.Log("wp: " + wpstr);
+        //Debug.Log("wp: " + wpstr);
 
         foreach (var item in WayPoints)
             WayPointsGrid.Add(item, new List<Node>());
@@ -139,46 +166,37 @@ public class MazeGenerator
                 if (node.Equals(point))
                     continue;
 
-                if (node.X <= point.X && node.Y <= point.Y)
+                if (WayPointPorts.ContainsKey(node) && WayPointPorts[node].Count > 0)
                 {
-                    for (int x = node.X; x <= point.X; x++)
-                        for (int y = node.Y; y <= point.Y; y++)
-                            if (IsObstacle(x, y))
-                                goto next;
-                }
+                    var p1 = WayPointPorts[node][0];
+                    var p2 = WayPointPorts[node][1];
 
-                if (node.X <= point.X && node.Y >= point.Y)
+                    var port1 = WayPointPorts.ContainsKey(point)
+                        ? GetClosestPort(p1, WayPointPorts[point][0], WayPointPorts[point][1])
+                        : point;
+
+                    var port2 = WayPointPorts.ContainsKey(point)
+                        ? GetClosestPort(p2, WayPointPorts[point][0], WayPointPorts[point][1])
+                        : point;
+
+                    if (IsLinkPossible(p1, port1))
+                        item.Value.Add(point);
+
+                    if (IsLinkPossible(p2, port2) && !item.Value.Contains(point))
+                        item.Value.Add(point);
+
+                }
+                else
                 {
-                    for (int x = node.X; x <= point.X; x++)
-                        for (int y = node.Y; y >= point.Y; y--)
-                            if (IsObstacle(x, y))
-                                goto next;
+                    var port = WayPointPorts.ContainsKey(point)
+                        ? GetClosestPort(node, WayPointPorts[point][0], WayPointPorts[point][1])
+                        : point;
+
+                    if (IsLinkPossible(node, port))
+                        item.Value.Add(point);
                 }
-
-                if (node.X >= point.X && node.Y <= point.Y)
-                {
-                    for (int x = node.X; x >= point.X; x--)
-                        for (int y = node.Y; y <= point.Y; y++)
-                            if (IsObstacle(x, y))
-                                goto next;
-                }
-
-                if (node.X >= point.X && node.Y >= point.Y)
-                {
-                    for (int x = node.X; x >= point.X; x--)
-                        for (int y = node.Y; y >= point.Y; y--)
-                            if (IsObstacle(x, y))
-                                goto next;
-                }
-
-                item.Value.Add(point);
-
-            next:
-                continue;
             }
         }
-
-        //Debug.Log("wp grid count: " + WayPointsGrid.Count);
 
         //foreach (var item in WayPointsGrid)
         //{
@@ -188,6 +206,77 @@ public class MazeGenerator
 
         //    Debug.Log(str);
         //}
+    }
+
+    private Node GetClosestPort(Node node, Node p1, Node p2)
+    {
+        return node.GetEstimationValue(p1) < node.GetEstimationValue(p2) ? p1 : p2;
+    }
+
+    private bool IsLinkPossible(Node a, Node b)
+    {
+        //a is node 
+        //b is point
+
+        if (a.X < b.X && a.Y < b.Y)         //lower left
+        {
+            for (int x = a.X; x <= b.X; x++)
+                for (int y = a.Y; y <= b.Y; y++)
+                    if (IsObstacle(x, y) && IsObstacleCollide(x, y, a, b))
+                        return false;
+        }
+        else if (a.X < b.X && a.Y > b.Y)    //upper left
+        {
+            for (int x = a.X; x <= b.X; x++)
+                for (int y = a.Y; y >= b.Y; y--)
+                    if (IsObstacle(x, y) && IsObstacleCollide(x, y, a, b))
+                        return false;
+        }
+        else if (a.X > b.X && a.Y > b.Y)    //upper right
+        {
+            for (int x = a.X; x >= b.X; x--)
+                for (int y = a.Y; y >= b.Y; y--)
+                    if (IsObstacle(x, y) && IsObstacleCollide(x, y, a, b))
+                        return false;
+        }
+        else if (a.X > b.X && a.Y < b.Y)    //lower right
+        {
+            for (int x = a.X; x >= b.X; x--)
+                for (int y = a.Y; y <= b.Y; y++)
+                    if (IsObstacle(x, y) && IsObstacleCollide(x, y, a, b))
+                        return false;
+        }
+        else if (a.X == b.X)
+        {
+            var x = a.X;
+
+            if (a.Y < b.Y)
+                for (int y = a.Y; y <= b.Y; y++)
+                    if (IsObstacle(x, y))
+                        return false;
+
+            if (a.Y > b.Y)
+                for (int y = a.Y; y >= b.Y; y--)
+                    if (IsObstacle(x, y))
+                        return false;
+        }
+        else if (a.Y == b.Y)
+        {
+            var y = a.Y;
+
+            if (a.X < b.X)
+                for (int x = a.X; x <= b.X; x++)
+                    if (IsObstacle(x, y))
+                        return false;
+
+            if (a.X > b.X)
+                for (int x = a.X; x >= b.X; x--)
+                    if (IsObstacle(x, y))
+                        return false;
+        }
+        else Debug.LogError(a + " - " + b + " has been linked illegal!");
+
+        return true;
     }
 
     private void ClearWayPoints()
@@ -244,6 +333,9 @@ public class MazeGenerator
 
         Start = new Node(x, y);
         MarkCell(x, y, MarkType.Start);
+
+        ClearWayPoints();
+        GenerateWayPoints();
     }
 
     internal void SetEnd(int x, int y)
@@ -256,6 +348,9 @@ public class MazeGenerator
 
         End = new Node(x, y);
         MarkCell(x, y, MarkType.End);
+
+        ClearWayPoints();
+        GenerateWayPoints();
     }
 
     internal void EditCell(int x, int y)
@@ -294,6 +389,9 @@ public class MazeGenerator
                 break;
             case MarkType.WayPoint:
                 color = Color.magenta;
+                break;
+            case MarkType.WayPointPort:
+                color = Color.cyan;
                 break;
             default:
                 color = Color.white;

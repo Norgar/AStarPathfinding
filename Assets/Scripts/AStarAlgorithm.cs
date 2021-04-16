@@ -22,17 +22,19 @@ public class AStarAlgorithm
         node = generator.WayPointsGrid.Keys.OrderBy(w => w.GCost).First();
         var trackedNodes = new HashSet<Node>() { node, new Node(24, 14) };
         var path = node.X + ":" + node.Y;
+        collector.Path = new List<Node> { node };
 
         while (true)
         {
+            ++counter;
             //minCost = open.Values.Min(m => m.FCost);
             //node = open.Values.First(n => n.FCost == minCost);
 
             var waypoints = generator.WayPointsGrid[node];
 
-            Debug.Log("at node " + node.X + ":" + node.Y
-                + " - wp coun: " + waypoints.Count
-                + " - tracked: " + waypoints.Count(w => trackedNodes.Contains(w)));
+            //Debug.Log("at node " + node.X + ":" + node.Y
+            //    + " - wp coun: " + waypoints.Count
+            //    + " - tracked: " + waypoints.Count(w => trackedNodes.Contains(w)));
 
             var closestWayPoint = waypoints
                 .Where(w => !trackedNodes.Contains(w))
@@ -43,6 +45,8 @@ public class AStarAlgorithm
             trackedNodes.Add(node);
 
             path += " - " + node.X + ":" + node.Y;
+
+            collector.Path.Add(node);
 
             if (node.Equals(generator.End) || counter > 10000)
             {
@@ -94,15 +98,14 @@ public class AStarAlgorithm
             //    }
             //}
 
-            ++counter;
         }
 
         collector.Passes = counter;
-        collector.Path = new List<Node>();
+        //collector.Path = new List<Node>();
 
-        if (open.ContainsKey(generator.End.GetHashCode()))
+        if (node.Equals(generator.End)/*open.ContainsKey(generator.End.GetHashCode())*/)
         {
-            BuildPath(closed.Last(), collector.Path);
+            //BuildPath(closed.Last(), collector.Path);
             collector.Result = "End point reached!\nTime: " + sw.ElapsedMilliseconds + "ms\nPasses: " + counter + "\nPath length: " + collector.Path.Count;
         }
         else
@@ -179,6 +182,11 @@ public class Node
     public void EstimateG(Node start)
     {
         GCost = Mathf.Abs(start.X - X) + Mathf.Abs(start.Y - Y);
+    }
+
+    public int GetEstimationValue(Node n)
+    {
+        return Mathf.Abs(n.X - X) + Mathf.Abs(n.Y - Y);
     }
 
     public override bool Equals(object obj)
