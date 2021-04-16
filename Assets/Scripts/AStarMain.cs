@@ -2,11 +2,13 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using System;
 
 public enum RestrictionType
 {
     None,
-    Wall
+    Wall,
+    Void
 }
 
 public enum MarkType
@@ -35,11 +37,13 @@ public class AStarMain : MonoBehaviour
     [SerializeField] private Canvas _mapCanvas;
     [SerializeField] private RawImage _rawImage;
     [SerializeField] private Texture2D _mazeMap;
+    [SerializeField] private Button _buttonTest;
     [SerializeField] private Button _buttonStart;
     [SerializeField] private Button _buttonClear;
     [SerializeField] private Button _buttonReset;
     [SerializeField] private TextMeshProUGUI _editModeHint;
     [SerializeField] private TextMeshProUGUI _resultText;
+    [SerializeField] private int testCount;
     [SerializeField] private float delay;
     [SerializeField] [Range(0, 1)] private float _noizeSensitivity;
 
@@ -54,6 +58,7 @@ public class AStarMain : MonoBehaviour
 
     private void Awake()
     {
+        _buttonTest.onClick.AddListener(OnTestClick);
         _buttonStart.onClick.AddListener(OnStartClick);
         _buttonClear.onClick.AddListener(OnClearClick);
         _buttonReset.onClick.AddListener(OnResetClick);
@@ -130,6 +135,27 @@ public class AStarMain : MonoBehaviour
         }
     }
 
+    private void OnTestClick()
+    {
+        for (int i = 0; i < testCount; i++)
+        {
+            try
+            {
+                OnClearClick();
+                MazeGenerator.SetRandomEnd();
+                MazeGenerator.SetRandomStart();
+                AStarAlgorithm.FindThePath(MazeGenerator, ResultDataCollector);
+                Debug.Log("test " + i + " has been passed!\t"
+                    + "start: " + MazeGenerator.Start + " end: " + MazeGenerator.End);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError("test " + i + " has been failed!\t"
+                    + "start: " + MazeGenerator.Start + " end: " + MazeGenerator.End + " +\t" + e);
+            }
+        }
+    }
+
     private void OnStartClick()
     {
         OnClearClick();
@@ -161,8 +187,8 @@ public class AStarMain : MonoBehaviour
         var start = MazeGenerator.Start;
         var finish = MazeGenerator.End;
         _rawImage.texture = MazeGenerator.GenerateTexture();
-        MazeGenerator.SetStart(start.X, start.Y);
-        MazeGenerator.SetEnd(finish.X, finish.Y);
+        MazeGenerator.SetStart(start.x, start.y);
+        MazeGenerator.SetEnd(finish.x, finish.y);
         MazeGenerator.GenerateWayPoints();
     }
 
@@ -170,13 +196,13 @@ public class AStarMain : MonoBehaviour
     {
         foreach (var pass in ResultDataCollector.Open)
             foreach (var item in pass.Value)
-                MazeGenerator.MarkCell(item.X, item.Y, MarkType.Open);
+                MazeGenerator.MarkCell(item.x, item.y, MarkType.Open);
 
         foreach (var item in ResultDataCollector.Closed)
-            MazeGenerator.MarkCell(item.Value.X, item.Value.Y, MarkType.Closed);
+            MazeGenerator.MarkCell(item.Value.x, item.Value.y, MarkType.Closed);
 
         foreach (var item in ResultDataCollector.Path)
-            MazeGenerator.MarkCell(item.X, item.Y, MarkType.Path);
+            MazeGenerator.MarkCell(item.x, item.y, MarkType.Path);
     }
 
     private IEnumerator ShowResultBySteps()
@@ -188,7 +214,7 @@ public class AStarMain : MonoBehaviour
                 yield return new WaitForSeconds(delay);
 
                 foreach (var item in ResultDataCollector.Open[i])
-                    MazeGenerator.MarkCell(item.X, item.Y, MarkType.Open);
+                    MazeGenerator.MarkCell(item.x, item.y, MarkType.Open);
             }
 
             if (ResultDataCollector.Closed.ContainsKey(i))
@@ -196,7 +222,7 @@ public class AStarMain : MonoBehaviour
                 yield return new WaitForSeconds(delay);
 
                 var item = ResultDataCollector.Closed[i];
-                MazeGenerator.MarkCell(item.X, item.Y, MarkType.Closed);
+                MazeGenerator.MarkCell(item.x, item.y, MarkType.Closed);
             }
         }
 
@@ -204,7 +230,7 @@ public class AStarMain : MonoBehaviour
         {
             yield return new WaitForSeconds(delay);
 
-            MazeGenerator.MarkCell(item.X, item.Y, MarkType.Path);
+            MazeGenerator.MarkCell(item.x, item.y, MarkType.Path);
         }
     }
 

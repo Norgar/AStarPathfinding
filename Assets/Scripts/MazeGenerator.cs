@@ -22,7 +22,7 @@ public class MazeGenerator
         _maze[x, y] == 1;
 
     private bool IsObstacleCollide(int x, int y, Node a, Node b) =>
-        MathHelper.IsRectIntersect(a.X + 0.5f, a.Y + 0.5f, b.X + 0.5f, b.Y + 0.5f, x, y, 1, 1);
+        MathHelper.IsRectIntersect(a.x + 0.5f, a.y + 0.5f, b.x + 0.5f, b.y + 0.5f, x, y, 1, 1);
 
     public void GenerateMaze(Texture2D mazeMap, float noizeSensitivity = 0.5f)
     {
@@ -126,9 +126,7 @@ public class MazeGenerator
         foreach (var item in wplist)
         {
             var wpNode = new Node(item.Key[0], item.Key[1]);
-            wpNode.IsTracked = false;
             wpNode.Estimate(End);
-            //wpNode.EstimateG(Start);
             WayPoints.Add(wpNode);
             MarkCell(item.Key[0], item.Key[1], MarkType.WayPoint);
 
@@ -218,65 +216,73 @@ public class MazeGenerator
         //a is node 
         //b is point
 
-        if (a.X < b.X && a.Y < b.Y)         //lower left
+        if (a.x < b.x && a.y < b.y)         //lower left
         {
-            for (int x = a.X; x <= b.X; x++)
-                for (int y = a.Y; y <= b.Y; y++)
+            for (int x = a.x; x <= b.x; x++)
+                for (int y = a.y; y <= b.y; y++)
                     if (IsObstacle(x, y) && IsObstacleCollide(x, y, a, b))
                         return false;
         }
-        else if (a.X < b.X && a.Y > b.Y)    //upper left
+        else if (a.x < b.x && a.y > b.y)    //upper left
         {
-            for (int x = a.X; x <= b.X; x++)
-                for (int y = a.Y; y >= b.Y; y--)
+            for (int x = a.x; x <= b.x; x++)
+                for (int y = a.y; y >= b.y; y--)
                     if (IsObstacle(x, y) && IsObstacleCollide(x, y, a, b))
                         return false;
         }
-        else if (a.X > b.X && a.Y > b.Y)    //upper right
+        else if (a.x > b.x && a.y > b.y)    //upper right
         {
-            for (int x = a.X; x >= b.X; x--)
-                for (int y = a.Y; y >= b.Y; y--)
+            for (int x = a.x; x >= b.x; x--)
+                for (int y = a.y; y >= b.y; y--)
                     if (IsObstacle(x, y) && IsObstacleCollide(x, y, a, b))
                         return false;
         }
-        else if (a.X > b.X && a.Y < b.Y)    //lower right
+        else if (a.x > b.x && a.y < b.y)    //lower right
         {
-            for (int x = a.X; x >= b.X; x--)
-                for (int y = a.Y; y <= b.Y; y++)
+            for (int x = a.x; x >= b.x; x--)
+                for (int y = a.y; y <= b.y; y++)
                     if (IsObstacle(x, y) && IsObstacleCollide(x, y, a, b))
                         return false;
         }
-        else if (a.X == b.X)
+        else if (a.x == b.x)
         {
-            var x = a.X;
+            var x = a.x;
 
-            if (a.Y < b.Y)
-                for (int y = a.Y; y <= b.Y; y++)
+            if (a.y < b.y)
+                for (int y = a.y; y <= b.y; y++)
                     if (IsObstacle(x, y))
                         return false;
 
-            if (a.Y > b.Y)
-                for (int y = a.Y; y >= b.Y; y--)
+            if (a.y > b.y)
+                for (int y = a.y; y >= b.y; y--)
                     if (IsObstacle(x, y))
                         return false;
         }
-        else if (a.Y == b.Y)
+        else if (a.y == b.y)
         {
-            var y = a.Y;
+            var y = a.y;
 
-            if (a.X < b.X)
-                for (int x = a.X; x <= b.X; x++)
+            if (a.x < b.x)
+                for (int x = a.x; x <= b.x; x++)
                     if (IsObstacle(x, y))
                         return false;
 
-            if (a.X > b.X)
-                for (int x = a.X; x >= b.X; x--)
+            if (a.x > b.x)
+                for (int x = a.x; x >= b.x; x--)
                     if (IsObstacle(x, y))
                         return false;
         }
         else Debug.LogError(a + " - " + b + " has been linked illegal!");
 
         return true;
+    }
+
+    private bool IsNeighbour(Node n1, Node n2)
+    {
+        if (n1.x == n2.x && Mathf.Abs(n1.x - n2.x) < 4)
+            return true;
+
+        return false;
     }
 
     private void ClearWayPoints()
@@ -311,7 +317,9 @@ public class MazeGenerator
 
         for (int y = 0; y < size; y++)
             for (int x = 0; x < size; x++)
-                color[index++] = _maze[x, y] == 1 ? Color.black : Color.white;
+                color[index++] = _maze[x, y] == 1
+                    ? Color.black
+                    : _maze[x, y] == 2 ? Color.cyan : Color.white;
 
         _texture.filterMode = FilterMode.Point;
         _texture.SetPixels32(color);
@@ -323,13 +331,23 @@ public class MazeGenerator
         return _texture;
     }
 
+    internal void SetRandomStart()
+    {
+        SetStart(Random.Range(0, 99), Random.Range(0, 99));
+    }
+
+    internal void SetRandomEnd()
+    {
+        SetEnd(Random.Range(0, 99), Random.Range(0, 99));
+    }
+
     internal void SetStart(int x, int y)
     {
         if (_maze[x, y] == 1)
             return;
 
         if (Start != null)
-            MarkCell(Start.X, Start.Y, MarkType.None);
+            MarkCell(Start.x, Start.y, MarkType.None);
 
         Start = new Node(x, y);
         MarkCell(x, y, MarkType.Start);
@@ -344,13 +362,15 @@ public class MazeGenerator
             return;
 
         if (End != null)
-            MarkCell(End.X, End.Y, MarkType.None);
+            MarkCell(End.x, End.y, MarkType.None);
 
         End = new Node(x, y);
         MarkCell(x, y, MarkType.End);
 
         ClearWayPoints();
         GenerateWayPoints();
+
+        Debug.Log("end linked to: " + string.Join(" - ", WayPointsGrid[End]));
     }
 
     internal void EditCell(int x, int y)

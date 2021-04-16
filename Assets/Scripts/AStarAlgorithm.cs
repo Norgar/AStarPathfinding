@@ -20,19 +20,18 @@ public class AStarAlgorithm
         sw.Start();
 
         node = generator.WayPointsGrid.Keys.OrderBy(w => w.GCost).First();
-        var trackedNodes = new HashSet<Node>() { node, new Node(24, 14) };
-        var path = node.X + ":" + node.Y;
-        collector.Path = new List<Node> { node };
+        var trackedNodes = new HashSet<Node>() { node/*, new Node(85, 32) */};
+        collector.Waypoints = new List<Node> { node };
+
+        // searching by way points loop
 
         while (true)
         {
             ++counter;
-            //minCost = open.Values.Min(m => m.FCost);
-            //node = open.Values.First(n => n.FCost == minCost);
 
             var waypoints = generator.WayPointsGrid[node];
 
-            //Debug.Log("at node " + node.X + ":" + node.Y
+            //Debug.Log("at node " + node.x + ":" + node.y
             //    + " - wp coun: " + waypoints.Count
             //    + " - tracked: " + waypoints.Count(w => trackedNodes.Contains(w)));
 
@@ -44,65 +43,94 @@ public class AStarAlgorithm
             node = closestWayPoint;
             trackedNodes.Add(node);
 
-            path += " - " + node.X + ":" + node.Y;
+            collector.Waypoints.Add(node);
 
-            collector.Path.Add(node);
-
-            if (node.Equals(generator.End) || counter > 10000)
+            if (node.Equals(generator.End) || counter > 1000)
             {
                 if (node.Equals(generator.End))
-                {
                     Debug.Log("end reched :) " + counter + " passes " + sw.ElapsedMilliseconds + "ms");
-                    Debug.Log("route " + path);
-                }
                 else
                     Debug.Log("end not reched :( " + counter);
 
+                Debug.Log("route: " + string.Join(" - ", collector.Waypoints));
+
                 break;
             }
+        }
 
-            //node =
+        // build path loop
+        counter = 0;
+        collector.Path = new List<Node>();
+        var subPath = new List<Node>();
 
-            //collector.Closed.Add(counter, node);
+        for (int i = 0; i < collector.Waypoints.Count; i++)
+        {
+            var start = collector.Waypoints[i];
 
-            //closed.Add(node);
-            //open.Remove(node.GetHashCode());
+            if (start.Equals(generator.End))
+                break;
 
-            //var neighbours = GetNeighbours(node);
+            var end = collector.Waypoints[i + 1];
+            node = start;
 
-            //foreach (var item in neighbours)
-            //{
-            //    var n = open.ContainsKey(item.GetHashCode())
-            //        ? open[item.GetHashCode()]
-            //        : item;
+            open.Clear();
+            open.Add(node.GetHashCode(), node);
+            closed.Clear();
 
-            //    if (closed.Contains(n) || !IsNodeAvailable(n, maze))
-            //        continue;
 
-            //    if (collector.Open.ContainsKey(counter))
-            //        collector.Open[counter].Add(n);
-            //    else
-            //        collector.Open.Add(counter, new List<Node> { n });
+            while (true)
+            {
+                node = open.Values.OrderBy(o => o.FCost).First();
 
-            //    if (!open.ContainsKey(n.GetHashCode()))
-            //    {
-            //        n.SetParent(node);
-            //        n.Estimate(generator.End);
-            //        n.SetCost(node.GCost + cost);
-            //        open.Add(n.GetHashCode(), n);
-            //    }
-            //    else if (IsLowerCostWay(node, n, cost))
-            //    {
-            //        node.SetParent(n);
-            //        node.SetCost(n.GCost + cost);
-            //    }
-            //}
+                if (node.Equals(end) || counter > 10000)
+                    break;
 
+                ++counter;
+
+                closed.Add(node);
+                open.Remove(node.GetHashCode());
+                collector.Closed.Add(counter, node);
+
+                var neighbours = GetNeighbours(node);
+
+                foreach (var item in neighbours)
+                {
+                    var n = open.ContainsKey(item.GetHashCode())
+                        ? open[item.GetHashCode()]
+                        : item;
+
+                    if (closed.Contains(n) || !IsNodeAvailable(n, maze))
+                        continue;
+
+                    if (collector.Open.ContainsKey(counter))
+                        collector.Open[counter].Add(n);
+                    else
+                        collector.Open.Add(counter, new List<Node> { n });
+
+                    if (!open.ContainsKey(n.GetHashCode()))
+                    {
+                        n.SetParent(node);
+                        n.Estimate(end);
+                        n.SetCost(node.GCost + cost);
+                        open.Add(n.GetHashCode(), n);
+                    }
+                    else if (IsLowerCostWay(node, n, cost))
+                    {
+                        node.SetParent(n);
+                        node.SetCost(n.GCost + cost);
+                    }
+                }
+            }
+
+            BuildPath(closed.Last(), subPath);
+            subPath.Reverse();
+            collector.Path.AddRange(subPath);
+            subPath.Clear();
         }
 
         collector.Passes = counter;
-        //collector.Path = new List<Node>();
 
+        //Debug.Log("path: " + collector.Path.Count + " / time: " + sw.ElapsedMilliseconds + "ms");
         if (node.Equals(generator.End)/*open.ContainsKey(generator.End.GetHashCode())*/)
         {
             //BuildPath(closed.Last(), collector.Path);
@@ -118,17 +146,17 @@ public class AStarAlgorithm
     {
         return new Node[]
         {
-            new Node(node.X+1, node.Y),
-            new Node(node.X-1, node.Y),
-            new Node(node.X , node.Y+1),
-            new Node(node.X , node.Y-1),
+            new Node(node.x+1, node.y),
+            new Node(node.x-1, node.y),
+            new Node(node.x , node.y+1),
+            new Node(node.x , node.y-1),
         };
     }
 
     private bool IsNodeAvailable(Node node, in int[,] maze)
     {
         var size = maze.GetLength(0);
-        return node.X >= 0 && node.Y >= 0 && node.X < size && node.Y < size && maze[node.X, node.Y] != 1;
+        return node.x >= 0 && node.y >= 0 && node.x < size && node.y < size && maze[node.x, node.y] != 1;
     }
 
     private bool IsLowerCostWay(Node current, Node neighbour, int transitionCost)
@@ -140,7 +168,6 @@ public class AStarAlgorithm
     {
         if (node.Parent == null)
         {
-            path.Reverse();
             return;
         }
         else
@@ -148,63 +175,5 @@ public class AStarAlgorithm
             path.Add(node);
             BuildPath(node.Parent, path);
         }
-    }
-}
-
-public class Node
-{
-    public Node Parent { get; private set; }
-
-    public int X { get; private set; }
-    public int Y { get; private set; }
-    public int GCost { get; private set; }
-    public int HCost { get; private set; }
-    public int FCost => GCost + HCost;
-
-    public bool IsTracked = false;
-
-    public Node(int x, int y)
-    {
-        X = x;
-        Y = y;
-    }
-
-    public void SetParent(Node parent) => Parent = parent;
-
-    public void SetCost(int cost) => GCost = cost;
-
-    public void Estimate(Node end)
-    {
-        HCost = Mathf.Abs(end.X - X) + Mathf.Abs(end.Y - Y);
-        //HCost = (int)(Mathf.Pow(end.X - X, 2) + Mathf.Pow(end.Y - Y, 2));
-    }
-
-    public void EstimateG(Node start)
-    {
-        GCost = Mathf.Abs(start.X - X) + Mathf.Abs(start.Y - Y);
-    }
-
-    public int GetEstimationValue(Node n)
-    {
-        return Mathf.Abs(n.X - X) + Mathf.Abs(n.Y - Y);
-    }
-
-    public override bool Equals(object obj)
-    {
-        var n = (Node)obj;
-        return n.X == X && n.Y == Y;
-    }
-
-    public override int GetHashCode()
-    {
-        int tmp = Y + (X + 1) / 2;
-        return X + (tmp * tmp);
-    }
-
-    public override string ToString()
-    {
-        return "node x:" + X + " y:" + Y
-            + "\t\t\tg:" + GCost + "\th:" + HCost + "\tf:" + FCost
-            + "\tp.x:" + Parent?.X + " p.y:" + Parent?.Y;
     }
 }
