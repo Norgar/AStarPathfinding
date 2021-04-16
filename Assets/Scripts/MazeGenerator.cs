@@ -48,7 +48,7 @@ public class MazeGenerator
             return;
 
         var size = _maze.GetLength(0);
-        var wplist = new Dictionary<int[], List<int[]>>();
+        var wplist = new Dictionary<Point, List<int[]>>();
 
         for (int x = 0; x < size; x++)
         {
@@ -60,7 +60,7 @@ public class MazeGenerator
                 if (!IsObstacle(x + 1, y) && !IsObstacle(x, y + 1) && !IsObstacle(x, y - 1))
                 {
                     wplist.Add(
-                        new int[] { x + 1, y },
+                        new Point(x + 1, y),
                         new List<int[]>
                         {
                             new int[] { x + 1, y + 1 },
@@ -70,7 +70,7 @@ public class MazeGenerator
                 else if (!IsObstacle(x, y + 1) && !IsObstacle(x + 1, y) && !IsObstacle(x - 1, y))
                 {
                     wplist.Add(
-                        new int[] { x, y + 1 },
+                        new Point(x, y + 1),
                         new List<int[]>
                         {
                             new int[] { x + 1, y + 1 },
@@ -80,7 +80,7 @@ public class MazeGenerator
                 else if (!IsObstacle(x - 1, y) && !IsObstacle(x, y + 1) && !IsObstacle(x, y - 1))
                 {
                     wplist.Add(
-                        new int[] { x - 1, y },
+                        new Point(x - 1, y),
                         new List<int[]>
                         {
                             new int[] { x - 1, y + 1 },
@@ -90,7 +90,7 @@ public class MazeGenerator
                 else if (!IsObstacle(x, y - 1) && !IsObstacle(x + 1, y) && !IsObstacle(x - 1, y))
                 {
                     wplist.Add(
-                        new int[] { x, y - 1 },
+                        new Point(x, y - 1),
                         new List<int[]>
                         {
                             new int[] { x + 1, y - 1 },
@@ -100,16 +100,16 @@ public class MazeGenerator
                 else
                 {
                     if (!IsObstacle(x + 1, y + 1) && !IsObstacle(x, y + 1) && !IsObstacle(x + 1, y))
-                        wplist.Add(new int[] { x + 1, y + 1 }, new List<int[]>());
+                        wplist.Add(new Point(x + 1, y + 1), new List<int[]>());
 
                     if (!IsObstacle(x + 1, y - 1) && !IsObstacle(x, y - 1) && !IsObstacle(x + 1, y))
-                        wplist.Add(new int[] { x + 1, y - 1 }, new List<int[]>());
+                        wplist.Add(new Point(x + 1, y - 1), new List<int[]>());
 
                     if (!IsObstacle(x - 1, y + 1) && !IsObstacle(x, y + 1) && !IsObstacle(x - 1, y))
-                        wplist.Add(new int[] { x - 1, y + 1 }, new List<int[]>());
+                        wplist.Add(new Point(x - 1, y + 1), new List<int[]>());
 
                     if (!IsObstacle(x - 1, y - 1) && !IsObstacle(x, y - 1) && !IsObstacle(x - 1, y))
-                        wplist.Add(new int[] { x - 1, y - 1 }, new List<int[]>());
+                        wplist.Add(new Point(x - 1, y - 1), new List<int[]>());
                 }
             }
         }
@@ -125,10 +125,10 @@ public class MazeGenerator
 
         foreach (var item in wplist)
         {
-            var wpNode = new Node(item.Key[0], item.Key[1]);
+            var wpNode = new Node(item.Key);
             wpNode.Estimate(End);
             WayPoints.Add(wpNode);
-            MarkCell(item.Key[0], item.Key[1], MarkType.WayPoint);
+            MarkCell(wpNode.x, wpNode.y, MarkType.WayPoint);
 
             if (item.Value.Count > 0)
             {
