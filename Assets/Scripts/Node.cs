@@ -11,11 +11,8 @@ public class Node
     public int HCost { get; private set; }
     public int FCost => GCost + HCost;
 
-    public Node(int x, int y)
-    {
-        _point.x = x;
-        _point.y = y;
-    }
+    public Node(int x, int y) => _point = new Point(x, y);
+    public Node(Point point) => _point = point;
 
     public void SetCost(int cost) => GCost = cost;
 
