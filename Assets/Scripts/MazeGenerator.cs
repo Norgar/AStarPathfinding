@@ -48,7 +48,7 @@ public class MazeGenerator
             return;
 
         var size = _maze.GetLength(0);
-        var wplist = new Dictionary<Point, List<int[]>>();
+        var wplist = new Dictionary<Point, List<Point>>();
 
         for (int x = 0; x < size; x++)
         {
@@ -61,55 +61,55 @@ public class MazeGenerator
                 {
                     wplist.Add(
                         new Point(x + 1, y),
-                        new List<int[]>
+                        new List<Point>
                         {
-                            new int[] { x + 1, y + 1 },
-                            new int[] { x + 1, y - 1 }
+                            new Point ( x + 1, y + 1 ),
+                            new Point ( x + 1, y - 1 )
                         });
                 }
                 else if (!IsObstacle(x, y + 1) && !IsObstacle(x + 1, y) && !IsObstacle(x - 1, y))
                 {
                     wplist.Add(
                         new Point(x, y + 1),
-                        new List<int[]>
+                        new List<Point>
                         {
-                            new int[] { x + 1, y + 1 },
-                            new int[] { x - 1, y + 1 }
+                            new Point ( x + 1, y + 1 ),
+                            new Point ( x - 1, y + 1 )
                         });
                 }
                 else if (!IsObstacle(x - 1, y) && !IsObstacle(x, y + 1) && !IsObstacle(x, y - 1))
                 {
                     wplist.Add(
                         new Point(x - 1, y),
-                        new List<int[]>
+                        new List<Point>
                         {
-                            new int[] { x - 1, y + 1 },
-                            new int[] { x - 1, y - 1 }
+                            new Point ( x - 1, y + 1 ),
+                            new Point ( x - 1, y - 1 )
                         });
                 }
                 else if (!IsObstacle(x, y - 1) && !IsObstacle(x + 1, y) && !IsObstacle(x - 1, y))
                 {
                     wplist.Add(
                         new Point(x, y - 1),
-                        new List<int[]>
+                        new List<Point>
                         {
-                            new int[] { x + 1, y - 1 },
-                            new int[] { x - 1, y - 1 }
+                            new Point ( x + 1, y - 1 ),
+                            new Point ( x - 1, y - 1 )
                         });
                 }
                 else
                 {
                     if (!IsObstacle(x + 1, y + 1) && !IsObstacle(x, y + 1) && !IsObstacle(x + 1, y))
-                        wplist.Add(new Point(x + 1, y + 1), new List<int[]>());
+                        wplist.Add(new Point(x + 1, y + 1), new List<Point>());
 
                     if (!IsObstacle(x + 1, y - 1) && !IsObstacle(x, y - 1) && !IsObstacle(x + 1, y))
-                        wplist.Add(new Point(x + 1, y - 1), new List<int[]>());
+                        wplist.Add(new Point(x + 1, y - 1), new List<Point>());
 
                     if (!IsObstacle(x - 1, y + 1) && !IsObstacle(x, y + 1) && !IsObstacle(x - 1, y))
-                        wplist.Add(new Point(x - 1, y + 1), new List<int[]>());
+                        wplist.Add(new Point(x - 1, y + 1), new List<Point>());
 
                     if (!IsObstacle(x - 1, y - 1) && !IsObstacle(x, y - 1) && !IsObstacle(x - 1, y))
-                        wplist.Add(new Point(x - 1, y - 1), new List<int[]>());
+                        wplist.Add(new Point(x - 1, y - 1), new List<Point>());
                 }
             }
         }
@@ -135,8 +135,8 @@ public class MazeGenerator
                 WayPointPorts.Add(wpNode, new List<Node>());
                 foreach (var port in item.Value)
                 {
-                    WayPointPorts[wpNode].Add(new Node(port[0], port[1]));
-                    MarkCell(port[0], port[1], MarkType.WayPointPort);
+                    WayPointPorts[wpNode].Add(new Node(port.x, port.y));
+                    MarkCell(port.x, port.y, MarkType.WayPointPort);
                 }
             }
         }
