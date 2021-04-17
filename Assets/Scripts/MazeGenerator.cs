@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class MazeGenerator
@@ -120,6 +121,22 @@ public class MazeGenerator
 
         WayPoints.Clear();
         WayPointsGrid.Clear();
+
+        //var cached = new Dictionary<Point, List<Point>>(wplist);
+
+        //foreach (var point in cached)
+        //{
+        //    if (!wplist.ContainsKey(point.Key))
+        //        continue;
+
+        //    var points = wplist.Keys.Where(i => i.x == point.Key.x).ToList();
+
+        //    foreach (var p in points)
+        //    {
+        //        if (IsNeighbour(point.Key, p))
+        //            wplist.Remove(p);
+        //    }
+        //}
 
         WayPoints.Add(Start);
 
@@ -277,10 +294,15 @@ public class MazeGenerator
         return true;
     }
 
-    private bool IsNeighbour(Node n1, Node n2)
+    private bool IsNeighbour(Point p1, Point p2, int delta = 4)
     {
-        if (n1.x == n2.x && Mathf.Abs(n1.x - n2.x) < 4)
-            return true;
+        if (!p1.Equals(p2))
+        {
+            var dropx = p1.y == p2.y && Mathf.Abs(p1.x - p2.x) < delta;
+            var dropy = p1.x == p2.x && Mathf.Abs(p1.y - p2.y) < delta;
+
+            return dropx || dropy;
+        }
 
         return false;
     }
